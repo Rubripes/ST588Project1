@@ -1,0 +1,48 @@
+---
+title: | 
+     | ST588Homework4
+     | Matt Bray
+     | Tyler Hunt
+format: html
+code-overflow: wrap
+editor: visual
+---
+
+# Install tidy Census/Load library for API Package
+
+```{r}
+library("tidyverse")
+library("censusapi")
+library("tidycensus")
+```
+
+
+```{r}
+nameList <- listCensusMetadata(
+  "acs/acs1/pums",
+  vintage = 2022,
+  type = "variables",
+  include_values = FALSE
+)
+nameLista <- as_tibble(nameList)
+head(nameLista) 
+```
+
+# Save Census Key
+
+```{r}
+census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = TRUE, install = TRUE)
+```
+
+# Get data from Census API for State:17
+
+```{r}
+censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
+```
+
+##Visualize Structure of censusData *can be removed from final project*
+```{r}
+head(censusData)
+length(censusData$PWGTP)
+```
+
