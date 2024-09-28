@@ -66,7 +66,7 @@ checkVarsValid <- function(vars,validVars){
 ```
 
 ```{r}
-retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All")){
+retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
   # Check if year is a single value AND the value passed is between 2010 and 2022
   
   if (length(year)!=1){
@@ -84,21 +84,13 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   checkVarsValid(var=numericVars,validVars = numericOptions)
   
-  #if (!all(numericVars %in% numericOptions)) {
- #   stop("Invalid variables: ", paste(numericVars[!numericVars %in% numericOptions], collapse = #", "))
-#  }
-  
   catOptions <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
   
-  if (!all(catVars %in% catOptions)) {
-    stop("Invalid variables: ", paste(catVars[!catVars %in% catOptions], collapse = ", "))
-  }
+  checkVarsValid(vars=catVars, validVars = catOptions)
   
   geographyOptions <- c("All","Region","Division","State")
   
-  if (!all(geographyLevel %in% geographyOptions)) {
-    stop("Invalid variables: ", paste(geographyLevel[!geographyLevel %in% geographyOptions], collapse = ", "))
-  }
+  checkVarsValid(vars=geographyLevel, validVars = geographyOptions)
   
   ## If PWGTP not in the numericVars parameter, add it
   
@@ -118,12 +110,32 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
     stop("One categorical variable must be given to be returned")
   }
   
-  return("Success")
+ ## If all variables are of valid length and valid values, paste them together to be passed in the API call
+  
+  
+  api_vars <- c(numericVars,catVars)
+  regioninPrefix <- switch(
+    geographyLevel,
+    All = NULL,
+    Division = "division",
+    Region = "region",
+    State = "state"
+  )
+  
+  # Below is for testing
+  
+  regioninSuffix <- 17
+  
+  ## Constructing the censusData
+  
+  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=paste(regioninPrefix,as.character(regioninSuffix),sep=":"))
+  
+  return(as_tibble(censusData))
 }
 ```
 
-
+## Storing returned tibble for working. Can be removed final project
 ```{r}
-
+state17 <- retrieveCensus(geographySpec = "State")
 ```
 
