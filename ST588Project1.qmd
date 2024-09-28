@@ -38,7 +38,7 @@ head(nameLista)
 ## See help documentation for tidycensus package here: https://walker-data.com/tidycensus/reference/census_api_key.html
 
 ```{r}
-census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = FALSE, install = TRUE)
+#census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = FALSE, install = TRUE)
 ```
 
 # Get data from Census API for State:17
@@ -46,7 +46,7 @@ census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = FALSE
 ```{r}
 censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
 
-censusTbl<-as_tibble(censusData)
+#censusTbl<-as_tibble(censusData)
 ```
 
 ##Visualize Structure of censusData *can be removed from final project*
@@ -55,3 +55,75 @@ censusTbl<-as_tibble(censusData)
 head(censusTbl)
 length(censusTbl$PWGTP)
 ```
+
+## Create a function to help with querying the API
+```{r}
+checkVarsValid <- function(vars,validVars){
+    if (!all(vars %in% validVars)) {
+    stop("Invalid variables: ", paste(vars[!vars %in% validVars], collapse = ", "))
+  }
+}
+```
+
+```{r}
+retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All")){
+  # Check if year is a single value AND the value passed is between 2010 and 2022
+  
+  if (length(year)!=1){
+    stop("A single year must be passed")
+  }
+  
+  if (year < 2010 | year > 2022){
+    stop("The year passed must be between 2010 & 2022")
+  }
+  
+  # Check if values passed in the numericVars (catVars) are within the numericOptions (catOptions) vector(s)
+  
+  numericReq <- "PWGTP"
+  numericOptions <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
+  
+  checkVarsValid(var=numericVars,validVars = numericOptions)
+  
+  #if (!all(numericVars %in% numericOptions)) {
+ #   stop("Invalid variables: ", paste(numericVars[!numericVars %in% numericOptions], collapse = #", "))
+#  }
+  
+  catOptions <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
+  
+  if (!all(catVars %in% catOptions)) {
+    stop("Invalid variables: ", paste(catVars[!catVars %in% catOptions], collapse = ", "))
+  }
+  
+  geographyOptions <- c("All","Region","Division","State")
+  
+  if (!all(geographyLevel %in% geographyOptions)) {
+    stop("Invalid variables: ", paste(geographyLevel[!geographyLevel %in% geographyOptions], collapse = ", "))
+  }
+  
+  ## If PWGTP not in the numericVars parameter, add it
+  
+  if (numericReq %in% numericVars) {
+    numericReturn <- numericVars
+  } else {
+    numericReturn <- c(numericVars,numericReq)
+  }
+  
+  ## Check to make sure the number of numeric variables that will be returned is NOT < 2. The number of categorical variables should not be < 1
+  
+  if (length(numericReturn) < 2) {
+    stop("One numeric variable other than ", paste(numericReq)," must be given in the numericVars parameter")
+  }
+  
+  if (length(catVars) < 1) {
+    stop("One categorical variable must be given to be returned")
+  }
+  
+  return("Success")
+}
+```
+
+
+```{r}
+
+```
+
