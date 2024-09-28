@@ -10,12 +10,15 @@ editor: visual
 
 # Install tidy Census/Load library for API Package
 
+## Notes for user: you should load the packages below if not loaded on your machine, and install the libraries as specified below.
+
 ```{r}
 library("tidyverse")
 library("censusapi")
 library("tidycensus")
 ```
 
+# Check names *can be removed from final project, or kept to help user find columns of interest*
 
 ```{r}
 nameList <- listCensusMetadata(
@@ -30,8 +33,12 @@ head(nameLista)
 
 # Save Census Key
 
+# User should define variable aKey with key generated from Census API key generator: https://api.census.gov/data/key_signup.html
+
+## See help documentation for tidycensus package here: https://walker-data.com/tidycensus/reference/census_api_key.html
+
 ```{r}
-census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = TRUE, install = TRUE)
+census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = FALSE, install = TRUE)
 ```
 
 # Get data from Census API for State:17
@@ -43,8 +50,8 @@ censusTbl<-as_tibble(censusData)
 ```
 
 ##Visualize Structure of censusData *can be removed from final project*
+
 ```{r}
 head(censusTbl)
 length(censusTbl$PWGTP)
 ```
-
