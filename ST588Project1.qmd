@@ -38,11 +38,13 @@ census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = TRUE,
 
 ```{r}
 censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
+
+censusTbl<-as_tibble(censusData)
 ```
 
 ##Visualize Structure of censusData *can be removed from final project*
 ```{r}
-head(censusData)
-length(censusData$PWGTP)
+head(censusTbl)
+length(censusTbl$PWGTP)
 ```
 
