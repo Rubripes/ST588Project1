@@ -80,9 +80,14 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   # Check if values passed in the numericVars (catVars) are within the numericOptions (catOptions) vector(s)
   
   numericReq <- "PWGTP"
-  numericOptions <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
   
-  checkVarsValid(var=numericVars,validVars = numericOptions)
+  numericOptions <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
+  timeOptions <- c("JWAP","JWDP")
+  
+  numericTimeOptions <- c(numericOptions,timeOptions)
+  
+  
+  checkVarsValid(var=numericVars,validVars = numericTimeOptions)
   
   catOptions <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
   
@@ -121,14 +126,19 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
     Region = "region",
     State = "state"
   )
-  
-  # Below is for testing
-  
   regioninSuffix <- ifelse(is.null(geographySpec),"*",geographySpec)
   
   ## Constructing the censusData
   
   censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
+  
+  ## Change data types to be appropriate
+  
+  censusData[numericVars[numericVars %in% timeOptions]] <- lapply(censusData[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
+  
+  censusData[numericVars[numericVars %in% numericOptions]] <- lapply(censusData[numericVars[numericVars %in% numericOptions]],as.numeric)
+  
+  censusData[catVars] <- lapply(censusData[catVars], as.factor)
   
   return(as_tibble(censusData))
 }
@@ -136,6 +146,28 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
 
 ## Storing returned tibble for working. Can be removed final project
 ```{r}
-state17 <- retrieveCensus(geographyLevel = "State", geographySpec = 17)
+state17 <- retrieveCensus(numericVars = c("AGEP","PWGTP","JWDP"),catVars = c("FER","SCHL","SEX"),geographyLevel = "State", geographySpec = 17)
+```
+
+## Function to pass multiple years and retrieve data
+
+```{r}
+retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL) {
+  combinedTibble <- retrieveCensus(year=years[1],numericVars=numericVars,catVars=catVars,geographyLevel=geographyLevel,geographySpec = geographySpec)
+  combinedTibble$year <- years[1]
+  for (i in 2:length(years)) {
+    yearTibble <- retrieveCensus(year=years[i],numericVars=numericVars,catVars=catVars,geographyLevel=geographyLevel,geographySpec = geographySpec)
+    yearTibble$year <- years[i]
+    combinedTibble <- dplyr::union(combinedTibble,yearTibble)
+  }
+  return(combinedTibble)
+}
+```
+
+## Testing multi-year function
+```{r}
+state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
+
+state17MultiYear
 ```
 
