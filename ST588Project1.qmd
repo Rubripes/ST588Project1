@@ -116,7 +116,7 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   api_vars <- c(numericVars,catVars)
   regioninPrefix <- switch(
     geographyLevel,
-    All = NULL,
+    All = "",
     Division = "division",
     Region = "region",
     State = "state"
@@ -128,7 +128,7 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   ## Constructing the censusData
   
-  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=ifelse(is.null(regionPrefix),NULL,paste(regioninPrefix,as.character(regioninSuffix),sep=":")))
+  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
   
   return(as_tibble(censusData))
 }
@@ -136,6 +136,6 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
 
 ## Storing returned tibble for working. Can be removed final project
 ```{r}
-state17 <- retrieveCensus(geographySpec = "State")
+state17 <- retrieveCensus(geographyLevel = "State", geographySpec = 17)
 ```
 
