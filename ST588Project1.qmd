@@ -16,6 +16,7 @@ editor: visual
 library("tidyverse")
 library("censusapi")
 library("tidycensus")
+library("jsonlite")
 ```
 
 # Check names *can be removed from final project, or kept to help user find columns of interest*
@@ -54,6 +55,31 @@ censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("
 ```{r}
 head(censusTbl)
 length(censusTbl$PWGTP)
+```
+
+## We are testing that an example API call to the Census API returns a result. We see the status 200 meaning our call has worked!
+
+```{r}
+censusApiTest <- httr::GET(paste('https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&SCHL=24'))
+
+censusApiTest
+```
+## Create a function to transform the HTTP/API request to a tibble
+```{r}
+rawToTibble <- function(rawData){
+  jsonData <- fromJSON(rawToChar(rawData$content))
+  ## Extract column names
+  colNames <- jsonData[1,]
+  
+  # Remove the first row from the data 
+  jsonData <- jsonData[-1,]
+  
+  tibbleData <- as_tibble(jsonData)
+  colnames(tibbleData) <- colNames
+  return(tibbleData)
+}
+
+rawToTibble(censusApiTest)
 ```
 
 ## Create a function to help with querying the API
@@ -128,19 +154,23 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   )
   regioninSuffix <- ifelse(is.null(geographySpec),"*",geographySpec)
   
+  ## Try to reconstruct https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&for=state:*&SCHL=24
+  
+  apiURL <- paste('https://api.census.gove/data/',year,'/acs/acs1/pums?get=')
+  
   ## Constructing the censusData
   
-  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
+  #censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
   
   ## Change data types to be appropriate
   
-  censusData[numericVars[numericVars %in% timeOptions]] <- lapply(censusData[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
+  #censusData[numericVars[numericVars %in% timeOptions]] <- lapply(censusData[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
   
-  censusData[numericVars[numericVars %in% numericOptions]] <- lapply(censusData[numericVars[numericVars %in% numericOptions]],as.numeric)
+  #censusData[numericVars[numericVars %in% numericOptions]] <- lapply(censusData[numericVars[numericVars %in% numericOptions]],as.numeric)
   
-  censusData[catVars] <- lapply(censusData[catVars], as.factor)
+  #censusData[catVars] <- lapply(censusData[catVars], as.factor)
   
-  return(as_tibble(censusData))
+  #return(as_tibble(censusData))
 }
 ```
 
