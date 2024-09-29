@@ -112,7 +112,6 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   numericTimeOptions <- c(numericOptions,timeOptions)
   
-  
   checkVarsValid(var=numericVars,validVars = numericTimeOptions)
   
   catOptions <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
@@ -126,14 +125,14 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   ## If PWGTP not in the numericVars parameter, add it
   
   if (numericReq %in% numericVars) {
-    numericReturn <- numericVars
+    numericVars <- numericVars
   } else {
-    numericReturn <- c(numericVars,numericReq)
+    numericVars <- c(numericVars,numericReq)
   }
   
   ## Check to make sure the number of numeric variables that will be returned is NOT < 2. The number of categorical variables should not be < 1
   
-  if (length(numericReturn) < 2) {
+  if (length(numericVars) < 2) {
     stop("One numeric variable other than ", paste(numericReq)," must be given in the numericVars parameter")
   }
   
@@ -143,8 +142,6 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
  ## If all variables are of valid length and valid values, paste them together to be passed in the API call
   
-  
-  api_vars <- c(numericVars,catVars)
   regioninPrefix <- switch(
     geographyLevel,
     All = "",
@@ -154,29 +151,38 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   )
   regioninSuffix <- ifelse(is.null(geographySpec),"*",geographySpec)
   
-  ## Try to reconstruct https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&for=state:*&SCHL=24
+  regioninString <- if(regioninPrefix!=""){paste0('&for=',regioninPrefix,":",regioninSuffix)}
   
-  apiURL <- paste('https://api.census.gove/data/',year,'/acs/acs1/pums?get=')
+  allVarsReq <- c(numericVars,catVars)
+  varString <- NULL
   
-  ## Constructing the censusData
+  for (value in allVarsReq){
+    varString <- paste0(varString,value,if(value != allVarsReq[length(allVarsReq)]){","})
+  }
   
-  #censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
+  apiURL <- paste0('https://api.census.gov/data/',year,'/acs/acs1/pums?get=',varString,regioninString)
+  
+  rawData <- httr::GET(apiURL)
+  
+  data <- rawToTibble(rawData)
   
   ## Change data types to be appropriate
   
-  #censusData[numericVars[numericVars %in% timeOptions]] <- lapply(censusData[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
+  data[numericVars[numericVars %in% timeOptions]] <- lapply(data[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
   
-  #censusData[numericVars[numericVars %in% numericOptions]] <- lapply(censusData[numericVars[numericVars %in% numericOptions]],as.numeric)
+  data[numericVars[numericVars %in% numericOptions]] <- lapply(data[numericVars[numericVars %in% numericOptions]],as.numeric)
   
-  #censusData[catVars] <- lapply(censusData[catVars], as.factor)
+  data[catVars] <- lapply(data[catVars], as.factor)
   
-  #return(as_tibble(censusData))
+  return(data)
 }
 ```
 
 ## Storing returned tibble for working. Can be removed final project
 ```{r}
 state17 <- retrieveCensus(numericVars = c("AGEP","PWGTP","JWDP"),catVars = c("FER","SCHL","SEX"),geographyLevel = "State", geographySpec = 17)
+
+state17
 ```
 
 ## Function to pass multiple years and retrieve data
