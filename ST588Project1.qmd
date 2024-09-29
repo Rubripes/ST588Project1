@@ -124,11 +124,11 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   # Below is for testing
   
-  regioninSuffix <- 17
+  regioninSuffix <- ifelse(is.null(geographySpec),"*",geographySpec)
   
   ## Constructing the censusData
   
-  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=paste(regioninPrefix,as.character(regioninSuffix),sep=":"))
+  censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=ifelse(is.null(regionPrefix),NULL,paste(regioninPrefix,as.character(regioninSuffix),sep=":")))
   
   return(as_tibble(censusData))
 }
