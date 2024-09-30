@@ -16,6 +16,7 @@ editor: visual
 library("tidyverse")
 library("censusapi")
 library("tidycensus")
+library("dplyr")
 ```
 
 # Check names *can be removed from final project, or kept to help user find columns of interest*
@@ -57,6 +58,7 @@ length(censusTbl$PWGTP)
 ```
 
 ## Create a function to help with querying the API
+
 ```{r}
 checkVarsValid <- function(vars,validVars){
     if (!all(vars %in% validVars)) {
@@ -130,12 +132,78 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   censusData <- getCensus(name="acs/acs1/pums",vintage=year,key=Sys.getenv("CENSUS_API_KEY"),vars=api_vars,regionin=if(regioninPrefix != ""){paste(regioninPrefix,as.character(regioninSuffix),sep=":")})
   
-  return(as_tibble(censusData))
+  ##This doesn't seem to return an object in the Global Environment, added object output
+  censusData <- return(as_tibble(censusData))
 }
 ```
 
 ## Storing returned tibble for working. Can be removed final project
+
 ```{r}
 state17 <- retrieveCensus(geographyLevel = "State", geographySpec = 17)
+```
+
+
+# Writing a Generic Function for Summarizing
+### test "retrieveCensus" function
+```{r}
+censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "PWGTP", "JWAP", "JWDP"),    catVars = c("SEX", "HHL"))
+```
+
+### Check "retrieveCensus" function output object structure
+```{r}
+names(censusData)
+length(names(censusData))
+str(censusData)
+head(censusData)
+```
+# Create custom summary function
+```{r}
+numVars <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
+catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
+
+
+namesCensusData <- as.list(names(censusData))
+dataNumVars <- character(length(namesCensusData))
+dataCatVars <- character(length(namesCensusData))
+
+## create lists of each Numeric and Categorical variables from user extracted dataset
+for(i in 1:length(namesCensusData)) {
+  if (namesCensusData[[i]] %in% numVars) {
+    dataNumVars[[i]]<- as_vector(namesCensusData[[i]])
+  } else if (namesCensusData[[i]] %in% catVars) {
+    dataCatVars[[i]]<- as_vector(namesCensusData[[i]])
+  } 
+}
+
+## make tibbles from dataset variables by data type and remove null values
+dataCatVarsTbl <- as_tibble(dataCatVars)
+catVarsTblShort<-dataCatVarsTbl |> 
+  filter(dataCatVarsTbl$value!="")
+dataNumVarsTbl <- as_tibble(dataNumVars)
+numVarsTblShort<-dataNumVarsTbl |>
+  filter(dataNumVarsTbl$value!="")
+
+names(dataCatVarsTbl)
+
+lengths(dataCatVarsTbl$value)
+
+dataCatVarsTbl$value
+
+dataCatVarsTbl
+dataNumVarsTbl
+catVarsTblShort
+numVarsTblShort
+
+namesCensusData
+dataCatVars
+dataNumVars
+rm(dataCatVars, dataNumVars, catVarsTblShort)
+```
+
+### Test Summary Function
+```{r}
+summary<-summaryCensus(tbl=censusData)
+summary
 ```
 
