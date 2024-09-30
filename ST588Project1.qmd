@@ -214,7 +214,13 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   return(data)
 }
 ```
+
+```{r}
+state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP","JWAP"),geographyLevel = "State",geographySpec = 17)
+
+state17
 ```
+
 
 ## Function to pass multiple years and retrieve data
 
@@ -238,3 +244,124 @@ state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = 
 state17MultiYear
 ```
 
+# Writing a Generic Function for Summarizing
+
+### test "retrieveCensus" function
+
+```{r}
+censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State",geographySpec = 17)
+```
+
+### Check "retrieveCensus" function output object structure
+
+```{r}
+names(censusData)
+length(names(censusData))
+str(censusData)
+head(censusData)
+```
+
+# Create custom summary function
+
+```{r}
+numVars <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
+catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
+
+
+namesCensusData <- as.list(names(censusData))
+dataNumVars <- character(length(namesCensusData))
+dataCatVars <- character(length(namesCensusData))
+
+## create lists of each Numeric and Categorical variables from user extracted dataset
+for(i in 1:length(namesCensusData)) {
+  if (namesCensusData[[i]] %in% numVars) {
+    dataNumVars[[i]]<- as_vector(namesCensusData[[i]])
+  } else if (namesCensusData[[i]] %in% catVars) {
+    dataCatVars[[i]]<- as_vector(namesCensusData[[i]])
+  } 
+}
+
+## make tibbles to contain numeric and categorical variable names for data pulled from API by user.
+
+#Categorical variables
+dataCatVarsTbl <- as_tibble(dataCatVars)
+catVarsTblShort<-dataCatVarsTbl |> 
+  filter(dataCatVarsTbl$value!="")
+
+#Numeric variables
+dataNumVarsTbl <- as_tibble(dataNumVars)
+numVarsTblShort<-dataNumVarsTbl |>
+  filter(dataNumVarsTbl$value!="")
+
+censusData<- censusData |>
+  mutate(PWGTP=as.numeric(PWGTP))
+
+head(censusData)
+#subset numeric data for summary function
+numCensus<-censusData |>
+  select(any_of(numVars) & -PWGTP) |>
+  mutate_all(as.numeric)
+#numCensus
+
+#Subset categorical data for summary function
+catCensus<-censusData |>
+  select(any_of(catVars))
+#catCensus
+
+
+splMean<-sum(numCensus$AGEP %*% censusData$PWGTP)/sum(censusData$PWGTP)
+splMean
+
+
+
+
+
+
+##############################################################
+#Possibly useful code below, may not be necessary
+
+##Create a list of variable strings to loop through function
+numVarString<-character(nrow(numVarsTblShort))
+ for(i in 1:nrow(numVarsTblShort)) {
+   numVarString[i]<-as_vector(paste(numVarsTblShort[i,],"[i]", sep="$"))
+}
+
+
+catVarString<-character(nrow(catVarsTblShort))
+ for(i in 1:nrow(catVarsTblShort)) {
+   catVarString[i]<-as_vector(paste(catVarsTblShort[i,],"[i]", sep="$"))
+}
+
+splMean<-length(as_vector(numVarsTblShort))
+for(i in 1:length(as_vector(dataNumVarsTbl))){
+  sum(censusData$)
+}
+
+
+length(as_vector(numVarsTblShort))
+length(numVarString)
+catVarString
+nrow(numVarsTblShort)
+names(dataCatVarsTbl)
+
+lengths(dataCatVarsTbl$value)
+
+dataCatVarsTbl$value
+
+dataCatVarsTbl
+dataNumVarsTbl
+catVarsTblShort
+numVarsTblShort
+
+namesCensusData
+dataCatVars
+dataNumVars
+rm(numVarString)
+```
+
+### Test Summary Function
+
+```{r}
+summary<-summaryCensus(tbl=censusData)
+summary
+```
