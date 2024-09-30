@@ -17,6 +17,7 @@ library("tidyverse")
 library("censusapi")
 library("tidycensus")
 library("jsonlite")
+library("dplyr")
 library("lubridate")
 ```
 
