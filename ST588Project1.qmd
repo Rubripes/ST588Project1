@@ -104,35 +104,23 @@ varsLkpTibble <- function(year,varName){
   return(tibbleData)
 }
 
-midTimeFunc <- function(startTime,endTime){
-  midAddlSecs <- as.numeric(difftime(endTime,startTime,units="secs"))/2
-  midTotalSecs <- as.numeric(startTime) + midAddlSecs
-  midhours <- floor(midTotalSecs/(60*60))
-  midminutes <- floor((midTotalSecs-(60*60*midhours))/60)
-  midseconds <- floor((midTotalSecs-(60*60*midhours)-60*midminutes)/60)
-  timeString <- paste(midhours,midminutes,midseconds,sep=":")
-  hmsTime <- hms::parse_hms(timeString)
-  return(timeString)
-}
-
 lkpToMiddleTime <- function(tibble,year=2022,timeVar){
   apiData <- varsLkpTibble(year=year,varName = timeVar)
   intervalTibble <- inner_join(tibble,apiData)
-  returnData <- intervalTibble %>%
+  data <- intervalTibble %>%
     select(-c(timeVar)) %>%
     mutate(TIME_INTERVAL = ifelse(TIME_INTERVAL == "N/A (not a worker; worker who worked from home)", NA, TIME_INTERVAL))
-  names(returnData) <- c(names(returnData)[1:(length(names(returnData))-1)],timeVar)
-  returnData <- returnData %>%
+  names(data) <- c(names(data)[1:(length(names(data))-1)],timeVar)
+  data <- data %>%
     separate_wider_delim(timeVar,delim = " to ",names=c('StartTime','EndTime')) %>%
     mutate(StartTime = parse_time(gsub("\\.", "", StartTime),format = "%I:%M %p"),
            EndTime = parse_time(gsub("\\.", "", EndTime),format = "%I:%M %p"),
-           MidTime =
-             ifelse(!is.na(StartTime), midTimeFunc(StartTime,EndTime),NA)
+           MidTime = StartTime
            )
-  returnData[[timeVar]] <- hms::as_hms(returnData$MidTime)
-  returnData <- returnData %>%
+  data[[timeVar]] <- data$MidTime
+  data <- data %>%
     select(-c('StartTime','EndTime','MidTime'))
-  return(returnData)
+  return(data)
 }
 ```
 
@@ -272,12 +260,13 @@ names(censusData)
 length(names(censusData))
 str(censusData)
 head(censusData)
+censusData
 ```
 
 # Create custom summary function
 
 ```{r}
-numVars <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP","PWGTP")
+numVars <- c("AGEP","GASP","GRPIP","JWMNP","PWGTP")
 catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
 
 
@@ -306,8 +295,8 @@ dataNumVarsTbl <- as_tibble(dataNumVars)
 numVarsTblShort<-dataNumVarsTbl |>
   filter(dataNumVarsTbl$value!="")
 
-censusData<- censusData |>
-  mutate(PWGTP=as.numeric(PWGTP))
+#censusData<- censusData |>
+#  mutate(PWGTP=as.numeric(PWGTP))
 
 head(censusData)
 #subset numeric data for summary function
@@ -319,14 +308,31 @@ numCensus<-censusData |>
 #Subset categorical data for summary function
 catCensus<-censusData |>
   select(any_of(catVars))
-#catCensus
-
-
-splMean<-sum(numCensus$AGEP %*% censusData$PWGTP)/sum(censusData$PWGTP)
-splMean
 
 
 
+#create loop to mean each variable from numCensus and place in list with name
+splMean <- list()
+for(i in 1:length(numCensus)){
+  splMean[[i]] <- as.numeric((sum(numCensus[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
+  names(splMean)[i]<-paste("mean", names(numCensus[i]), sep="_")
+}
+
+
+#create loop to calculate sample SD from numCensus and place in list with name
+splSD <- list()
+for(i in 1:length(numCensus)){
+  splSD[[i]] <- (sqrt(sum(numCensus[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
+  names(splSD)[i]<-paste("SD", names(numCensus[i]), sep="_")
+}
+
+#Create loop to generate counts for each categorical variable
+splCount <- list()
+for(i in 1:length(catCensus)){
+  splCount[[i]]<- catCensus[i] |>
+    group_by(catCensus[i]) |>
+    summarize(n=n())
+}
 
 
 
@@ -334,21 +340,37 @@ splMean
 #Possibly useful code below, may not be necessary
 
 ##Create a list of variable strings to loop through function
+
+#create list of splMean for each returned numeric variable
 numVarString<-character(nrow(numVarsTblShort))
  for(i in 1:nrow(numVarsTblShort)) {
-   numVarString[i]<-as_vector(paste(numVarsTblShort[i,],"[i]", sep="$"))
-}
+   numVarString[i]<-as_vector(paste("censusData",numVarsTblShort[i,], sep="$"))
+ }
 
+splMean<-sum(numCensus[[1]] %*% censusData$PWGTP)/sum(censusData$PWGTP)
+splMean
+
+splSD<-sqrt(sum(numCensus$AGEP^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[1]]^2)
+splSD
+
+numVarString<-character(nrow(numVarsTblShort))
+
+ for(i in 1:nrow(numVarsTblShort)) {
+   numVarString[i]<-as_vector(paste("censusData",numVarsTblShort[i,], sep="$"))
+}
+#numVarString
+
+splMean<-length(as_vector(numVarString))
+for(i in 1:length(as_vector(dataNumVarsTbl))){
+  
+}
 
 catVarString<-character(nrow(catVarsTblShort))
  for(i in 1:nrow(catVarsTblShort)) {
    catVarString[i]<-as_vector(paste(catVarsTblShort[i,],"[i]", sep="$"))
 }
 
-splMean<-length(as_vector(numVarsTblShort))
-for(i in 1:length(as_vector(dataNumVarsTbl))){
-  sum(censusData$)
-}
+
 
 
 length(as_vector(numVarsTblShort))
@@ -364,7 +386,7 @@ dataCatVarsTbl$value
 dataCatVarsTbl
 dataNumVarsTbl
 catVarsTblShort
-numVarsTblShort
+nrow(numVarsTblShort)
 
 namesCensusData
 dataCatVars
