@@ -92,7 +92,7 @@ checkVarsValid <- function(vars,validVars){
   }
 }
 
-varsLkpTibble <- function(year,varName,lkpVal){
+varsLkpTibble <- function(year,varName,lkpVal="lkpVal"){
   rawData <- httr::GET(url=paste0('https://api.census.gov/data/',year,'/acs/acs1/pums/variables/',varName,'.json'))
   jsonData <- fromJSON(rawToChar(rawData$content))
   tibbleData <- as_tibble(jsonData$values$item)
@@ -133,7 +133,27 @@ lkpToMiddleTime <- function(tibble,year=2022,timeVar){
     select(-c('StartTime','EndTime','MidTime'))
   return(returnData)
 }
+
+factorLkp <- function(tibbleData,year,catVar){
+  apiData <- varsLkpTibble(year=year,varName = catVar)
+  x <- tibbleData[[catVar]]
+  levels <- sort(unique(x))
+  apiData <- apiData %>%
+    filter(get(catVar) %in% levels) %>%
+    arrange(get(catVar))
+  labels <- apiData$lkpVal
+  newVec <- factor(x=x,levels=levels,labels = labels)
+  tibbleData[[catVar]] <- newVec
+  return(tibbleData)
+}
 ```
+
+```{r}
+factorTest <- factorLkp(tibbleData=state17,year=2022,catVar="FER")
+factorTest
+```
+
+
 
 ```{r}
 retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
@@ -221,14 +241,16 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   data[numericVars[numericVars %in% numericOptions]] <- lapply(data[numericVars[numericVars %in% numericOptions]],as.numeric)
   
-  data[catVars] <- lapply(data[catVars], as.factor)
+  for (value in catVars){
+    data <- factorLkp(data,year=year,catVar = value)
+  }
   
   return(data)
 }
 ```
 
 ```{r}
-state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),geographyLevel = "State",geographySpec = 17)
+state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
 
 state17
 ```
