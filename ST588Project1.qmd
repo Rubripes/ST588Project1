@@ -92,37 +92,68 @@ checkVarsValid <- function(vars,validVars){
   }
 }
 
-varsLkpTibble <- function(year,varName){
+varsLkpTibble <- function(year,varName,lkpVal="lkpVal"){
   rawData <- httr::GET(url=paste0('https://api.census.gov/data/',year,'/acs/acs1/pums/variables/',varName,'.json'))
   jsonData <- fromJSON(rawToChar(rawData$content))
   tibbleData <- as_tibble(jsonData$values$item)
   tibbleData <- tibbleData %>%
     pivot_longer(cols=names(tibbleData),
                  names_to = varName,
-                 values_to = "TIME_INTERVAL"
+                 values_to = lkpVal
                  )
   return(tibbleData)
 }
 
+midTimeFunc <- function(startTime,endTime){
+  midAddlSecs <- as.numeric(difftime(endTime,startTime,units="secs"))/2
+  midTotalSecs <- as.numeric(startTime) + midAddlSecs
+  midhours <- floor(midTotalSecs/(60*60))
+  midminutes <- floor((midTotalSecs-(60*60*midhours))/60)
+  midseconds <- floor((midTotalSecs-(60*60*midhours)-60*midminutes)/60)
+  timeString <- paste(midhours,midminutes,midseconds,sep=":")
+  hmsTime <- hms::parse_hms(timeString)
+  return(timeString)
+}
+
 lkpToMiddleTime <- function(tibble,year=2022,timeVar){
-  apiData <- varsLkpTibble(year=year,varName = timeVar)
+  apiData <- varsLkpTibble(year=year,varName = timeVar,lkpVal = "TIME_INTERVAL")
   intervalTibble <- inner_join(tibble,apiData)
-  data <- intervalTibble %>%
+  returnData <- intervalTibble %>%
     select(-c(timeVar)) %>%
     mutate(TIME_INTERVAL = ifelse(TIME_INTERVAL == "N/A (not a worker; worker who worked from home)", NA, TIME_INTERVAL))
-  names(data) <- c(names(data)[1:(length(names(data))-1)],timeVar)
-  data <- data %>%
+  names(returnData) <- c(names(returnData)[1:(length(names(returnData))-1)],timeVar)
+  returnData <- returnData %>%
     separate_wider_delim(timeVar,delim = " to ",names=c('StartTime','EndTime')) %>%
     mutate(StartTime = parse_time(gsub("\\.", "", StartTime),format = "%I:%M %p"),
            EndTime = parse_time(gsub("\\.", "", EndTime),format = "%I:%M %p"),
-           MidTime = StartTime
+           MidTime = ifelse(!is.na(StartTime), midTimeFunc(StartTime,EndTime),NA)
            )
-  data[[timeVar]] <- data$MidTime
-  data <- data %>%
+  returnData[[timeVar]] <- hms::as_hms(returnData$MidTime)
+  returnData <- returnData %>%
     select(-c('StartTime','EndTime','MidTime'))
-  return(data)
+  return(returnData)
+}
+
+factorLkp <- function(tibbleData,year,catVar){
+  apiData <- varsLkpTibble(year=year,varName = catVar)
+  x <- tibbleData[[catVar]]
+  levels <- sort(unique(x))
+  apiData <- apiData %>%
+    filter(get(catVar) %in% levels) %>%
+    arrange(get(catVar))
+  labels <- apiData$lkpVal
+  newVec <- factor(x=x,levels=levels,labels = labels)
+  tibbleData[[catVar]] <- newVec
+  return(tibbleData)
 }
 ```
+
+```{r}
+factorTest <- factorLkp(tibbleData=state17,year=2022,catVar="FER")
+factorTest
+```
+
+
 
 ```{r}
 retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
@@ -210,14 +241,16 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   data[numericVars[numericVars %in% numericOptions]] <- lapply(data[numericVars[numericVars %in% numericOptions]],as.numeric)
   
-  data[catVars] <- lapply(data[catVars], as.factor)
+  for (value in catVars){
+    data <- factorLkp(data,year=year,catVar = value)
+  }
   
   return(data)
 }
 ```
 
 ```{r}
-state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP","JWAP"),geographyLevel = "State",geographySpec = 17)
+state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
 
 state17
 ```
