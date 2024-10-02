@@ -250,7 +250,7 @@ state17MultiYear
 ### test "retrieveCensus" function
 
 ```{r}
-censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State",geographySpec = 17)
+censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State",geographySpec = 17)
 ```
 
 ### Check "retrieveCensus" function output object structure
@@ -266,74 +266,51 @@ censusData
 # Create custom summary function
 
 ```{r}
-numVars <- c("AGEP","GASP","GRPIP","JWMNP","PWGTP")
-catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
-
-
-namesCensusData <- as.list(names(censusData))
-dataNumVars <- character(length(namesCensusData))
-dataCatVars <- character(length(namesCensusData))
-
-## create lists of each Numeric and Categorical variables from user extracted dataset
-for(i in 1:length(namesCensusData)) {
-  if (namesCensusData[[i]] %in% numVars) {
-    dataNumVars[[i]]<- as_vector(namesCensusData[[i]])
-  } else if (namesCensusData[[i]] %in% catVars) {
-    dataCatVars[[i]]<- as_vector(namesCensusData[[i]])
-  } 
-}
-
-## make tibbles to contain numeric and categorical variable names for data pulled from API by user.
-
-#Categorical variables
-dataCatVarsTbl <- as_tibble(dataCatVars)
-catVarsTblShort<-dataCatVarsTbl |> 
-  filter(dataCatVarsTbl$value!="")
-
-#Numeric variables
-dataNumVarsTbl <- as_tibble(dataNumVars)
-numVarsTblShort<-dataNumVarsTbl |>
-  filter(dataNumVarsTbl$value!="")
-
-#censusData<- censusData |>
-#  mutate(PWGTP=as.numeric(PWGTP))
-
-head(censusData)
-#subset numeric data for summary function
-numCensus<-censusData |>
-  select(any_of(numVars) & -PWGTP) |>
-  mutate_all(as.numeric)
-#numCensus
-
-#Subset categorical data for summary function
-catCensus<-censusData |>
-  select(any_of(catVars))
-
+#numVars <- c("AGEP","GASP","GRPIP","JWMNP","PWGTP")
+#catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
+numericData <- censusData|>
+  select(where(is.numeric) & -"PWGTP")
+#numericData  
+charData <- censusData|>
+  select(where(is.factor))
+#charData
 
 
 #create loop to mean each variable from numCensus and place in list with name
 splMean <- list()
-for(i in 1:length(numCensus)){
-  splMean[[i]] <- as.numeric((sum(numCensus[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
-  names(splMean)[i]<-paste("mean", names(numCensus[i]), sep="_")
+for(i in 1:length(numericData)){
+  splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
+  names(splMean)[i]<-paste(names(numericData[i]))
 }
-
 
 #create loop to calculate sample SD from numCensus and place in list with name
 splSD <- list()
-for(i in 1:length(numCensus)){
-  splSD[[i]] <- (sqrt(sum(numCensus[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
-  names(splSD)[i]<-paste("SD", names(numCensus[i]), sep="_")
+for(i in 1:length(numericData)){
+  splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
+  names(splSD)[i]<-paste(names(numericData[i]))
 }
+
+splMeanTbl<-as_tibble(splMean)
+splSDTbl<-as_tibble(splSD)
+
 
 #Create loop to generate counts for each categorical variable
-splCount <- list()
-for(i in 1:length(catCensus)){
-  splCount[[i]]<- catCensus[i] |>
-    group_by(catCensus[i]) |>
+catSummary <- list()
+for(i in 1:length(charData)){
+  catSummary[[i]]<- charData[i] |>
+    group_by(charData[i]) |>
     summarize(n=n())
+    names(splCount)[i]<-paste("count", names(charData[i]), sep="_")
 }
 
+numSumRowNames <- as_tibble(c("splMean", "splSD"))
+numericSum <- tibble()
+numericSum <- bind_rows(splMeanTbl,splSDTbl)
+numericSumNamed <- bind_cols(numSumRowNames,numericSum)
+
+
+numericSumNamed
+catSummary
 
 
 ##############################################################
@@ -369,8 +346,6 @@ catVarString<-character(nrow(catVarsTblShort))
  for(i in 1:nrow(catVarsTblShort)) {
    catVarString[i]<-as_vector(paste(catVarsTblShort[i,],"[i]", sep="$"))
 }
-
-
 
 
 length(as_vector(numVarsTblShort))
