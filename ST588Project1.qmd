@@ -128,9 +128,9 @@ lkpToMiddleTime <- function(tibble,year=2022,timeVar){
            EndTime = parse_time(gsub("\\.", "", EndTime),format = "%I:%M %p"),
            MidTime = ifelse(!is.na(StartTime), midTimeFunc(StartTime,EndTime),NA)
            )
-  returnData[[timeVar]] <- returnData$MidTime
-  #data <- data %>%
-  #  select(-c('StartTime','EndTime','MidTime'))
+  returnData[[timeVar]] <- hms::as_hms(returnData$MidTime)
+  returnData <- returnData %>%
+    select(-c('StartTime','EndTime','MidTime'))
   return(returnData)
 }
 ```
