@@ -278,7 +278,6 @@ state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = 
 state17MultiYear
 ```
 
-# Writing a Generic Function for Summarizing
 
 ### test "retrieveCensus" function
 
@@ -297,34 +296,63 @@ censusData
 ```
 
 # Create custom summary function
+## Notes to user: 
 
 ```{r}
-#numVars <- c("AGEP","GASP","GRPIP","JWMNP","PWGTP")
-#catVars <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
-numericData <- censusData|>
-  select(where(is.numeric) & -"PWGTP")
-#numericData  
-charData <- censusData|>
+censusSummerizR <- function(x, numericVars=c("AGEP","GASP","GRPIP","JWMNP","PWGTP"),   catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")){
+
+
+#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice
+
+numericDataDefault <- x |>
+  select(where(is.numeric))
+
+charDataDefault <- x|>
   select(where(is.factor))
-#charData
+
+if(length(names(numericDataDefault))<length(numericVars)){
+  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
+}
+
+if(length(names(charDataDefault))<length(catVars)){
+  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
+}
 
 
-#create loop to mean each variable from numCensus and place in list with name
+if(length(names(numericDataDefault))>length(numericVars)){
+  numericData<- x |> 
+    select(numericVars)
+  } else {
+  numericData<- numericDataDefault |>
+    select(where(-"PWGTP"))
+} 
+
+
+if(length(names(charDataDefault$names))>length(catVars)){
+  charData<- x |> 
+    select(catVars)
+  } else {
+  charData<- charDataDefault 
+}    
+
+#create loop to mean each variable from numericData and place in list with name
 splMean <- list()
 for(i in 1:length(numericData)){
   splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
   names(splMean)[i]<-paste(names(numericData[i]))
 }
 
-#create loop to calculate sample SD from numCensus and place in list with name
+#create loop to calculate sample SD from numericData and place in list with name
 splSD <- list()
 for(i in 1:length(numericData)){
   splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
   names(splSD)[i]<-paste(names(numericData[i]))
 }
 
+#coerce splMean and splSD to Tibbles
 splMeanTbl<-as_tibble(splMean)
 splSDTbl<-as_tibble(splSD)
+
 
 
 #Create loop to generate counts for each categorical variable
@@ -332,8 +360,8 @@ catSummary <- list()
 for(i in 1:length(charData)){
   catSummary[[i]]<- charData[i] |>
     group_by(charData[i]) |>
-    summarize(n=n())
-    names(splCount)[i]<-paste("count", names(charData[i]), sep="_")
+      summarize(n=n())
+    names(catSummary)[i]<-paste("count", names(charData[i]), sep="_")
 }
 
 numSumRowNames <- as_tibble(c("splMean", "splSD"))
@@ -341,11 +369,109 @@ numericSum <- tibble()
 numericSum <- bind_rows(splMeanTbl,splSDTbl)
 numericSumNamed <- bind_cols(numSumRowNames,numericSum)
 
+#Summaries to Output from Function
+return(c(numericSumNamed,catSummary))
 
-numericSumNamed
-catSummary
+}
+
+```
 
 
+## Test out censusSummerizR Function
+```{r}
+censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
+```
+
+
+```{r}
+#censusSummerizR <- function(x,
+
+numericVars=c("AGEP")   
+catVars=c("SEX")
+
+
+#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice
+
+numericDataDefault <- censusData |>
+  select(where(is.numeric) & -"PWGTP")
+
+charDataDefault <- censusData|>
+  select(where(is.factor))
+
+
+length(names(numericDataDefault))
+       
+if(length(names(numericDataDefault))<length(numericVars)){
+  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
+}
+
+if(length(charDataDefault)<length(catVars)){
+  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
+}
+
+
+if(length(numericDataDefault$names)>length(numericVars)){
+  numericData<- x |> 
+    select(numericVars)
+  } else {
+  numericData<- numericDataDefault 
+} 
+
+
+if(length(charDataDefault$names)>length(catVars)){
+  charData<- x |> 
+    select(catVars)
+  } else {
+  charData<- charDataDefault 
+}    
+
+#create loop to mean each variable from numericData and place in list with name
+splMean <- list()
+for(i in 1:length(numericData)){
+  splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
+  names(splMean)[i]<-paste(names(numericData[i]))
+}
+
+#create loop to calculate sample SD from numericData and place in list with name
+splSD <- list()
+for(i in 1:length(numericData)){
+  splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
+  names(splSD)[i]<-paste(names(numericData[i]))
+}
+
+#coerce splMean and splSD to Tibbles
+splMeanTbl<-as_tibble(splMean)
+splSDTbl<-as_tibble(splSD)
+
+
+
+#Create loop to generate counts for each categorical variable
+catSummary <- list()
+for(i in 1:length(charData)){
+  catSummary[[i]]<- charData[i] |>
+    group_by(charData[i]) |>
+      summarize(n=n())
+    names(catSummary)[i]<-paste("count", names(charData[i]), sep="_")
+}
+
+numSumRowNames <- as_tibble(c("splMean", "splSD"))
+numericSum <- tibble()
+numericSum <- bind_rows(splMeanTbl,splSDTbl)
+numericSumNamed <- bind_cols(numSumRowNames,numericSum)
+
+#Summaries to Output from Function
+return(c(numericSumNamed,catSummary))
+
+}
+
+```
+
+
+
+
+
+
+```{r}
 ##############################################################
 #Possibly useful code below, may not be necessary
 
@@ -402,9 +528,3 @@ dataNumVars
 rm(numVarString)
 ```
 
-### Test Summary Function
-
-```{r}
-summary<-summaryCensus(tbl=censusData)
-summary
-```
