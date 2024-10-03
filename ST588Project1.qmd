@@ -24,14 +24,14 @@ library("lubridate")
 # Check names *can be removed from final project, or kept to help user find columns of interest*
 
 ```{r}
-nameList <- listCensusMetadata(
-  "acs/acs1/pums",
-  vintage = 2022,
-  type = "variables",
-  include_values = FALSE
-)
-nameLista <- as_tibble(nameList)
-head(nameLista) 
+#nameList <- listCensusMetadata(
+#  "acs/acs1/pums",
+#  vintage = 2022,
+#  type = "variables",
+#  include_values = FALSE
+#)
+#nameLista <- as_tibble(nameList)
+#head(nameLista) 
 ```
 
 # Save Census Key
@@ -47,7 +47,7 @@ head(nameLista)
 # Get data from Census API for State:17
 
 ```{r}
-censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
+#censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
 
 #censusTbl<-as_tibble(censusData)
 ```
@@ -55,18 +55,20 @@ censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("
 ##Visualize Structure of censusData *can be removed from final project*
 
 ```{r}
-head(censusTbl)
-length(censusTbl$PWGTP)
+#head(censusTbl)
+#length(censusTbl$PWGTP)
 ```
 
 ## We are testing that an example API call to the Census API returns a result. We see the status 200 meaning our call has worked!
 
 ```{r}
-censusApiTest <- httr::GET(paste('https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&SCHL=24'))
+#censusApiTest <- httr::GET(paste('https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&SCHL=24'))
 
-censusApiTest
+#censusApiTest
 ```
+
 ## Create a function to transform the HTTP/API request to a tibble
+
 ```{r}
 rawToTibble <- function(rawData){
   jsonData <- fromJSON(rawToChar(rawData$content))
@@ -81,10 +83,11 @@ rawToTibble <- function(rawData){
   return(tibbleData)
 }
 
-rawToTibble(censusApiTest)
+#rawToTibble(censusApiTest)
 ```
 
 ## Create a function to help with querying the API
+
 ```{r}
 checkVarsValid <- function(vars,validVars){
     if (!all(vars %in% validVars)) {
@@ -149,11 +152,9 @@ factorLkp <- function(tibbleData,year,catVar){
 ```
 
 ```{r}
-factorTest <- factorLkp(tibbleData=state17,year=2022,catVar="FER")
-factorTest
+#factorTest <- factorLkp(tibbleData=state17,year=2022,catVar="FER")
+#factorTest
 ```
-
-
 
 ```{r}
 retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
@@ -250,11 +251,10 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
 ```
 
 ```{r}
-state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
+#state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
 
-state17
+#state17
 ```
-
 
 ## Function to pass multiple years and retrieve data
 
@@ -272,12 +272,12 @@ retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),
 ```
 
 ## Testing multi-year function
+
 ```{r}
-state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
+#state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
 
-state17MultiYear
+#state17MultiYear
 ```
-
 
 ### test "retrieveCensus" function
 
@@ -288,21 +288,22 @@ censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JW
 ### Check "retrieveCensus" function output object structure
 
 ```{r}
-names(censusData)
-length(names(censusData))
-str(censusData)
-head(censusData)
-censusData
+#names(censusData)
+#length(names(censusData))
+#str(censusData)
+#head(censusData)
+#censusData
 ```
 
 # Create custom summary function
-## Notes to user: 
+
+### Notes to user: censusSummerizR function will calculate weighted sample mean and weighted sample standard deviations for the numeric variables of interest and will calculate counts of the categorical variables of interest.  You should select variables to evaluate that were pulled from the PUMS Census API using one of the "retrieveCensus" or "retrieveMultiYearCensus functions.  Variables not in your starting dataset will cause censusSummerizR to stop.
 
 ```{r}
 censusSummerizR <- function(x, numericVars=c("AGEP","GASP","GRPIP","JWMNP","PWGTP"),   catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")){
 
 
-#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice
+#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice of variables to explore
 
 numericDataDefault <- x |>
   select(where(is.numeric))
@@ -353,8 +354,6 @@ for(i in 1:length(numericData)){
 splMeanTbl<-as_tibble(splMean)
 splSDTbl<-as_tibble(splSD)
 
-
-
 #Create loop to generate counts for each categorical variable
 catSummary <- list()
 for(i in 1:length(charData)){
@@ -366,165 +365,28 @@ for(i in 1:length(charData)){
 
 numSumRowNames <- as_tibble(c("splMean", "splSD"))
 numericSum <- tibble()
-numericSum <- bind_rows(splMeanTbl,splSDTbl)
-numericSumNamed <- bind_cols(numSumRowNames,numericSum)
+numericSum <- as_tibble(bind_rows(splMeanTbl,splSDTbl))
+numericSumNamed <- as_tibble(bind_cols(numSumRowNames,numericSum))
 
-#Summaries to Output from Function
-return(c(numericSumNamed,catSummary))
+#Need to plate "numericSumNamed" in its own named list so that output is visually appealing, and each object is of similar dimensions.
+meanSD <-list(numericSumNamed)
+names(meanSD) <- "Mean and SD"
+
+
+#Return liSt of numeric and categorical summaries
+return(c(catSummary,meanSD))
 
 }
 
 ```
-
 
 ## Test out censusSummerizR Function
-```{r}
-censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
-```
-
 
 ```{r}
-#censusSummerizR <- function(x,
+summaryList<-censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
 
-numericVars=c("AGEP")   
-catVars=c("SEX")
-
-
-#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice
-
-numericDataDefault <- censusData |>
-  select(where(is.numeric) & -"PWGTP")
-
-charDataDefault <- censusData|>
-  select(where(is.factor))
-
-
-length(names(numericDataDefault))
-       
-if(length(names(numericDataDefault))<length(numericVars)){
-  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
-}
-
-if(length(charDataDefault)<length(catVars)){
-  stop("You cannot subset data that was not pulled from API, re-pull desired variables")
-}
-
-
-if(length(numericDataDefault$names)>length(numericVars)){
-  numericData<- x |> 
-    select(numericVars)
-  } else {
-  numericData<- numericDataDefault 
-} 
-
-
-if(length(charDataDefault$names)>length(catVars)){
-  charData<- x |> 
-    select(catVars)
-  } else {
-  charData<- charDataDefault 
-}    
-
-#create loop to mean each variable from numericData and place in list with name
-splMean <- list()
-for(i in 1:length(numericData)){
-  splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
-  names(splMean)[i]<-paste(names(numericData[i]))
-}
-
-#create loop to calculate sample SD from numericData and place in list with name
-splSD <- list()
-for(i in 1:length(numericData)){
-  splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
-  names(splSD)[i]<-paste(names(numericData[i]))
-}
-
-#coerce splMean and splSD to Tibbles
-splMeanTbl<-as_tibble(splMean)
-splSDTbl<-as_tibble(splSD)
-
-
-
-#Create loop to generate counts for each categorical variable
-catSummary <- list()
-for(i in 1:length(charData)){
-  catSummary[[i]]<- charData[i] |>
-    group_by(charData[i]) |>
-      summarize(n=n())
-    names(catSummary)[i]<-paste("count", names(charData[i]), sep="_")
-}
-
-numSumRowNames <- as_tibble(c("splMean", "splSD"))
-numericSum <- tibble()
-numericSum <- bind_rows(splMeanTbl,splSDTbl)
-numericSumNamed <- bind_cols(numSumRowNames,numericSum)
-
-#Summaries to Output from Function
-return(c(numericSumNamed,catSummary))
-
-}
-
+#Present example data in rendered webpage
+knitr::kable(summaryList[1])
+knitr::kable(summaryList[2])
+knitr::kable(summaryList[3])
 ```
-
-
-
-
-
-
-```{r}
-##############################################################
-#Possibly useful code below, may not be necessary
-
-##Create a list of variable strings to loop through function
-
-#create list of splMean for each returned numeric variable
-numVarString<-character(nrow(numVarsTblShort))
- for(i in 1:nrow(numVarsTblShort)) {
-   numVarString[i]<-as_vector(paste("censusData",numVarsTblShort[i,], sep="$"))
- }
-
-splMean<-sum(numCensus[[1]] %*% censusData$PWGTP)/sum(censusData$PWGTP)
-splMean
-
-splSD<-sqrt(sum(numCensus$AGEP^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[1]]^2)
-splSD
-
-numVarString<-character(nrow(numVarsTblShort))
-
- for(i in 1:nrow(numVarsTblShort)) {
-   numVarString[i]<-as_vector(paste("censusData",numVarsTblShort[i,], sep="$"))
-}
-#numVarString
-
-splMean<-length(as_vector(numVarString))
-for(i in 1:length(as_vector(dataNumVarsTbl))){
-  
-}
-
-catVarString<-character(nrow(catVarsTblShort))
- for(i in 1:nrow(catVarsTblShort)) {
-   catVarString[i]<-as_vector(paste(catVarsTblShort[i,],"[i]", sep="$"))
-}
-
-
-length(as_vector(numVarsTblShort))
-length(numVarString)
-catVarString
-nrow(numVarsTblShort)
-names(dataCatVarsTbl)
-
-lengths(dataCatVarsTbl$value)
-
-dataCatVarsTbl$value
-
-dataCatVarsTbl
-dataNumVarsTbl
-catVarsTblShort
-nrow(numVarsTblShort)
-
-namesCensusData
-dataCatVars
-dataNumVars
-rm(numVarString)
-```
-
