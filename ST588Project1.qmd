@@ -1,12 +1,16 @@
 ---
 title: | 
-     | ST588Homework4
+     | ST588 Project 1
      | Matt Bray
      | Tyler Hunt
 format: html
 code-overflow: wrap
 editor: visual
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
 
 ## Project Introduction
 
@@ -161,20 +165,19 @@ The first part of the function validates that parameters meet certain criteria. 
 1.  Only one year value should be passed in the parameter
 2.  The year parameter value should be between 2010 & 2022
 3.  Numeric variables, categorical variables and the geography level had to be valid variables in a pre-approved list
-4.  One numeric variables other than PWGTP had to be passed in the numericVars parameter. 
+4.  One numeric variables other than PWGTP had to be passed in the numericVars parameter.
 5.  One categorical variable must be passed in the catVars parameter
 
 If these criteria are not met, a detailed stop() message is returned by the function
 
-### Using Parameters to Construct API 
+### Using Parameters to Construct API
 
 To construct the API URL, we need the constant components (base), the year, a list of variables and the geography specification. Year is directly passed by the user with no transformations. We create our variables list by unioning the numericVars and catVars parameter values and delimiting with a comma (,).
 
 For the geography specification, we use switch() and if else functions to follow these generic rules:
 
-- If the user passes "All" in geographyLevel, return an empty string
-- If the user passes another value in geography level return in the following format "geographyLevel:geographySpec". An example is "state:17"
-_ If the user passes another value in geography level and does NOT include a geography spec, return everything for that level in the format (example) of "state:*", with an asterik representing all.
+-   If the user passes "All" in geographyLevel, return an empty string
+-   If the user passes another value in geography level return in the following format "geographyLevel:geographySpec". An example is "state:17" \_ If the user passes another value in geography level and does NOT include a geography spec, return everything for that level in the format (example) of "state:\*", with an asterik representing all.
 
 Paste all of these string values together to construct the API.
 
@@ -293,18 +296,25 @@ retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),
 ## Testing multi-year function
 
 ```{r}
-state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
+#state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
 
-state17MultiYear
+#state17MultiYear
 ```
 
-### test "retrieveCensus" function
+## Test `retrieveCensus` function
+
+This test dataset is intended to test that data called from the API using the retrieve Census function will be usable by the `censusSummerizR` function below.
+
+1.  numeric and categorical variables were selected psuedo randomly to test function.
+2.  extracted data were placed into `censusData` object.
 
 ```{r}
 censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State",geographySpec = 17)
 ```
 
-### Check "retrieveCensus" function output object structure
+### Check `retrieveCensus` function output object structure.
+
+The code chunk below can be used to visualze the structure of the data extracted by the `retrieveCensus` function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. This code has been commented out as the output takes up a lot of space!
 
 ```{r}
 #names(censusData)
@@ -316,11 +326,29 @@ censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JW
 
 # Create custom summary function
 
-### Notes to user: censusSummerizR function will calculate weighted sample mean and weighted sample standard deviations for the numeric variables of interest and will calculate counts of the categorical variables of interest.  You should select variables to evaluate that were pulled from the PUMS Census API using one of the "retrieveCensus" or "retrieveMultiYearCensus functions.  Variables not in your starting dataset will cause censusSummerizR to stop.
+The `censusSummerizR` function takes the dataset object that is output from the `retrieveCensus` function and outputs a named list of the following:
 
+-   Sample Mean and Sample Standard Deviation for the numeric variables
+-   Sample counts of observations categorized by factor levels for factor variables
+
+The `censusSummerizR` function takes the full dataset object and splits into two seperate datasets that are susequently utilized for statistical calulations and counts, as appropriate:
+
+-   An object of numeric data
+-   An object of categorical data
+
+The user selects from a list of both numeric and categorical variables to summarize and if the variable requested by the user is not present in the supplied source dataset, the procedure stops and alerst the user:
+
+`"You cannot subset data that was not pulled from API, re-pull desired variables"`
+
+The output of the `censusSummerizR` function is a list of tibbles that contain:
+
+-   A single tibble that calculates sample mean and sample standard deviation for all numeric variables, and
+-   An individual tibble that summarizes counts of each factor for that variable
+
+*Notes to user: `censusSummerizR` function will calculate weighted sample mean and weighted sample standard deviations for the numeric variables of interest and will calculate counts of the categorical variables of interest. User should select variables to summarize that were pulled from the PUMS Census API using one of the `retrieveCensus` or `retrieveMultiYearCensus` functions. Variables not in your starting dataset will cause `censusSummerizR` to stop. `PWGTP` should not be summarized as it is an observation weight.*
 
 ```{r}
-censusSummerizR <- function(x, numericVars=c("AGEP","GASP","GRPIP","JWMNP","PWGTP"),   catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")){
+censusSummerizR <- function(x, numericVars=c("AGEP","GASP","GRPIP","JWMNP"),   catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")){
 
 
 #check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice of variables to explore
@@ -388,7 +416,7 @@ numericSum <- tibble()
 numericSum <- as_tibble(bind_rows(splMeanTbl,splSDTbl))
 numericSumNamed <- as_tibble(bind_cols(numSumRowNames,numericSum))
 
-#Need to plate "numericSumNamed" in its own named list so that output is visually appealing, and each object is of similar dimensions.
+#Need to place "numericSumNamed" in its own named list so that output is visually appealing, and each object is of similar dimensions.
 meanSD <-list(numericSumNamed)
 names(meanSD) <- "Mean and SD"
 
@@ -400,18 +428,17 @@ return(c(catSummary,meanSD))
 
 ```
 
-## Test out censusSummerizR Function
+## Test out `censusSummerizR` Function
 
-```{r}
-censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
-```
+Now that the `censusSummerizR` function has been written, we need to make sure that it works as intended. The variables below are representative numeric and categorical variables and return summaries, exclusive of the "weight" variable, `PWGTP`.
 
 ```{r}
 summaryList<-censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
+summaryList
 
+length(summaryList)
 #Present example data in rendered webpage
 knitr::kable(summaryList[1])
 knitr::kable(summaryList[2])
 knitr::kable(summaryList[3])
 ```
-
