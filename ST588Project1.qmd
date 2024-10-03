@@ -8,9 +8,22 @@ code-overflow: wrap
 editor: visual
 ---
 
-# Install tidy Census/Load library for API Package
+## Project Introduction
 
-## Notes for user: you should load the packages below if not loaded on your machine, and install the libraries as specified below.
+In our Data Science for Statisticians course we have learning how to do the following:
+
+1.  Work with Base R
+2.  Leverage the tidyverse library to read, manipulate and analyze data
+3.  Build functions
+4.  Build API Calls
+
+Using this (nonexhaustive) list of skills and more, we are going to explore person-level data within the Public Use Microdata Sample (PUMS) Census dataset. Throughout this document we will build functions to read, summarize and plot the data. We will provide a narrative that explains the code and the functionality.
+
+## Install Packages
+
+Before getting into functions and technical details, it is important that the user have the appropriate packages installed and read into the session. Without these libraries the code will *NOT* run.
+
+*Notes for user: You should load the packages in the below code chunk using install.packages() to load on your local machine.*
 
 ```{r}
 library("tidyverse")
@@ -21,52 +34,26 @@ library("dplyr")
 library("lubridate")
 ```
 
-# Check names *can be removed from final project, or kept to help user find columns of interest*
+## Basic API Testing
 
-```{r}
-nameList <- listCensusMetadata(
-  "acs/acs1/pums",
-  vintage = 2022,
-  type = "variables",
-  include_values = FALSE
-)
-nameLista <- as_tibble(nameList)
-head(nameLista) 
-```
+Before building our API from scratch, lets use a specific API URL to ensure that we can retrieve data from the API, parse the data, and format as a tibble.
 
-# Save Census Key
+Below we are calling the GET function from the httr library to retrieve data from this API URL <https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&SCHL=24>. Feel free to copy and paste this into your web browser. You should see some data in your web browser.
 
-# User should define variable aKey with key generated from Census API key generator: https://api.census.gov/data/key_signup.html
-
-## See help documentation for tidycensus package here: https://walker-data.com/tidycensus/reference/census_api_key.html
-
-```{r}
-#census_api_key(key="b8bf07f35eb3e0d8ab1f95f20172b2ff62eb4514", overwrite = FALSE, install = TRUE)
-```
-
-# Get data from Census API for State:17
-
-```{r}
-censusData <- getCensus(name="acs/acs1/pums", vintage = 2022, key = Sys.getenv("CENSUS_API_KEY") , vars = c("PWGTP", "AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"), regionin="state:17")
-
-#censusTbl<-as_tibble(censusData)
-```
-
-##Visualize Structure of censusData *can be removed from final project*
-
-```{r}
-head(censusTbl)
-length(censusTbl$PWGTP)
-```
-
-## We are testing that an example API call to the Census API returns a result. We see the status 200 meaning our call has worked!
+In the below, the output is less friendly...
 
 ```{r}
 censusApiTest <- httr::GET(paste('https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&SCHL=24'))
 
 censusApiTest
 ```
-## Create a function to transform the HTTP/API request to a tibble
+
+Below, we are building a function that takes the raw data (the input) and returns a tibble as the output. We are using a combination of pre-built functions from our libraries to parse the raw data to JSON. The first row represents our column headers while the rest of the rows represent the data points.
+
+We construct the tibble by passing the data points and using our headers to assign column names to the tibble.
+
+You can see the output is much prettier (and easier to work with) than before!
+
 ```{r}
 rawToTibble <- function(rawData){
   jsonData <- fromJSON(rawToChar(rawData$content))
@@ -84,7 +71,18 @@ rawToTibble <- function(rawData){
 rawToTibble(censusApiTest)
 ```
 
-## Create a function to help with querying the API
+## Some Helper Functions for Querying the API
+
+Our functions used the build and query APIs rely on a series of other functions. These other functions were built to segment complex problems into modules, reduce duplicate code and improve readability for technical users.
+
+Brief explanations fo each helper function:
+
+1.  *checkVarsValid* - Our function used to query the API can only accept certain variables. This function ensures the variables passed by the user (vars) are all in the list of valid variables (validVars). If not, the function will stop and tell the user that they have provided an invalid variable(s).
+2.  *varsLkpTibble* - Sometimes our variables require that the user lookup those variables and fetch a different attribute from that lookup. These values can vary year to year, so the user must pass the year, the name of the variable and a column name for the lookup value (just "lkpVal" by default). A tibble is returned.
+3.  *midTimeFunc* - Some variables represent an interval of time. We want to return the midpoint of that interval, but the raw data type is not user friendly. This function takes start and ends of the interval in the format "3:29 p.m." and transforms into HMS format
+4.  *lkpToMiddleTime* - This helper function leverages our two (2) previous helper functions to lookup time intervals in the string format "3:29 p.m. to 3:33 p.m", retrieve the median in the interval, cast as HMS format and return the transformed tibble.
+5.  *factorLkp* - When given categorical variables as integers (1,2,3...etc) we want to return meaningful character values. We again use our helper function *varsLkpTibble* to lookup the values for a specific year. Using the factor() function, we pass our original data points, an ordered list of integers as our levels and the paired character values as our labels. This is also applied directly to a tibble
+
 ```{r}
 checkVarsValid <- function(vars,validVars){
     if (!all(vars %in% validVars)) {
@@ -148,12 +146,37 @@ factorLkp <- function(tibbleData,year,catVar){
 }
 ```
 
-```{r}
-factorTest <- factorLkp(tibbleData=state17,year=2022,catVar="FER")
-factorTest
-```
+## Querying the API
 
+Finally, we are building our function to query the API.
 
+### Inputs/Parameters
+
+The user will pass the year (default = 2022), a vector of numeric variables (default = "AGEP","PWGTP"), a vector of categorical variables (default = "SEX"), a geography level (default = "ALL"). Optionally, the user can also pass the specific identifier for that geography level if they choose.
+
+### Parameter Validation
+
+The first part of the function validates that parameters meet certain criteria. That criteria is as follows:
+
+1.  Only one year value should be passed in the parameter
+2.  The year parameter value should be between 2010 & 2022
+3.  Numeric variables, categorical variables and the geography level had to be valid variables in a pre-approved list
+4.  One numeric variables other than PWGTP had to be passed in the numericVars parameter. 
+5.  One categorical variable must be passed in the catVars parameter
+
+If these criteria are not met, a detailed stop() message is returned by the function
+
+### Using Parameters to Construct API 
+
+To construct the API URL, we need the constant components (base), the year, a list of variables and the geography specification. Year is directly passed by the user with no transformations. We create our variables list by unioning the numericVars and catVars parameter values and delimiting with a comma (,).
+
+For the geography specification, we use switch() and if else functions to follow these generic rules:
+
+- If the user passes "All" in geographyLevel, return an empty string
+- If the user passes another value in geography level return in the following format "geographyLevel:geographySpec". An example is "state:17"
+_ If the user passes another value in geography level and does NOT include a geography spec, return everything for that level in the format (example) of "state:*", with an asterik representing all.
+
+Paste all of these string values together to construct the API.
 
 ```{r}
 retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
@@ -232,9 +255,6 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
   
   ## Change data types to be appropriate
   
-  #data[numericVars[numericVars %in% timeOptions]] <- lapply(data[numericVars[numericVars %in% timeOptions]],as.POSIXct,format = "%Y-%m-%d %H:%M:%S")
-  
-  
   for (value in intersect(numericVars,timeOptions)){
     data <- lkpToMiddleTime(data,year=year,timeVar = value)
   }
@@ -255,7 +275,6 @@ state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars
 state17
 ```
 
-
 ## Function to pass multiple years and retrieve data
 
 ```{r}
@@ -272,12 +291,12 @@ retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),
 ```
 
 ## Testing multi-year function
+
 ```{r}
 state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
 
 state17MultiYear
 ```
-
 
 ### test "retrieveCensus" function
 
@@ -296,7 +315,8 @@ censusData
 ```
 
 # Create custom summary function
-## Notes to user: 
+
+## Notes to user:
 
 ```{r}
 censusSummerizR <- function(x, numericVars=c("AGEP","GASP","GRPIP","JWMNP","PWGTP"),   catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")){
@@ -376,12 +396,11 @@ return(c(numericSumNamed,catSummary))
 
 ```
 
-
 ## Test out censusSummerizR Function
+
 ```{r}
 censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
 ```
-
 
 ```{r}
 #censusSummerizR <- function(x,
@@ -466,11 +485,6 @@ return(c(numericSumNamed,catSummary))
 
 ```
 
-
-
-
-
-
 ```{r}
 ##############################################################
 #Possibly useful code below, may not be necessary
@@ -527,4 +541,3 @@ dataCatVars
 dataNumVars
 rm(numVarString)
 ```
-
