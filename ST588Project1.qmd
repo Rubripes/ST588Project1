@@ -420,14 +420,14 @@ if(length(names(charDataDefault$names))>length(catVars)){
 #create loop to mean each variable from numericData and place in list with name
 splMean <- list()
 for(i in 1:length(numericData)){
-  splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% censusData$PWGTP)/sum(censusData$PWGTP)))
+  splMean[[i]] <- as.numeric((sum(numericData[[i]] %*% x$PWGTP)/sum(x$PWGTP)))
   names(splMean)[i]<-paste(names(numericData[i]))
 }
 
 #create loop to calculate sample SD from numericData and place in list with name
 splSD <- list()
 for(i in 1:length(numericData)){
-  splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% censusData$PWGTP)/sum(censusData$PWGTP)-splMean[[i]]^2))
+  splSD[[i]] <- (sqrt(sum(numericData[[i]]^2 %*% x$PWGTP)/sum(x$PWGTP)-splMean[[i]]^2))
   names(splSD)[i]<-paste(names(numericData[i]))
 }
 
@@ -530,3 +530,35 @@ Lets call our `retrieveMultiYearCensus` function and pass the appropriate parame
 censusStateData <- retrieveMultiYearCensus(years=c(2021,2022),numericVars = c("AGEP","GASP","JWMNP"),catVars=c("HHL","SCH","SCHL","SEX"),geographyLevel = "State",geographySpec = 17)
 
 censusStateData
+```
+
+I'm interested in viewing some summary statistics for Age (AGEP), Sex (SEX), School Level (SCHL) and Travel Time to work (JWMNP). Lets use our `censusSummerizR` and view the output.
+
+```{r}
+censusStateSummary <- censusSummerizR(x = censusStateData, numericVars = c("AGEP"), catVars = c("SEX","SCHL"))
+
+knitr::kable(censusStateSummary[1])
+knitr::kable(censusStateSummary[2])
+knitr::kable(censusStateSummary[3])
+```
+
+```{r}
+if (!is.vector(censusStateData[["AGEP"]]) || !is.vector(censusStateData$PWGTP)) {
+  stop("Both arguments must be vectors.")
+}
+
+# Ensure both vectors are row vectors or column vectors
+if (length(dim(censusStateData[["AGEP"]])) == 2 && length(dim(censusStateData$PWGTP)) == 2) {
+  # If both are matrices, check if they have the same dimensions
+  if (dim(censusStateData[["AGEP"]]) != dim(censusStateData$PWGTP)) {
+    stop("Matrix dimensions are not compatible.")
+  }
+} else {
+  # If one or both are vectors, ensure they have the same length
+  if (length(censusStateData[["AGEP"]]) != length(censusStateData$PWGTP)) {
+    stop("Vector lengths are not compatible.")
+  }
+}
+
+```
+
