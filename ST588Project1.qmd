@@ -474,3 +474,12 @@ knitr::kable(summaryList[1])
 knitr::kable(summaryList[2])
 knitr::kable(summaryList[3])
 ```
+
+## Using it all together
+
+We've built and tested these functions, but lets use them all together.
+
+```{r}
+## Code block to hold some calls and code
+```
+
