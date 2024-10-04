@@ -36,6 +36,7 @@ library("tidycensus")
 library("jsonlite")
 library("dplyr")
 library("lubridate")
+library("ggplot2")
 ```
 
 ## Basic API Testing
@@ -303,18 +304,18 @@ retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),
 
 ## Test `retrieveCensus` function
 
-This test dataset is intended to test that data called from the API using the retrieve Census function will be usable by the `censusSummerizR` function below.
+This test dataset is intended to test that data called from the API using the `retrieveCensus` function will be usable by the `censusSummerizR` function below.
 
-1.  numeric and categorical variables were selected psuedo randomly to test function.
+1.  numeric and categorical variables were selected psuedo-randomly to test function.
 2.  extracted data were placed into `censusData` object.
 
 ```{r}
-censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State",geographySpec = 17)
+censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JWAP", "JWDP"), catVars = c("SEX", "HHL"),geographyLevel = "State", geographySpec = 17)
 ```
 
 ### Check `retrieveCensus` function output object structure.
 
-The code chunk below can be used to visualze the structure of the data extracted by the `retrieveCensus` function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. This code has been commented out as the output takes up a lot of space!
+The code chunk below can be used to visualize the structure of the data extracted by the `retrieveCensus` function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. `names` shows the column names, `length()` give us a number of items in the object, `str()` tells us the stucture of the object, and calling `censusData` shows us the first 1000 rows of the object. This code has been commented out as the output takes up a lot of space!
 
 ```{r}
 #names(censusData)
@@ -336,7 +337,7 @@ The `censusSummerizR` function takes the full dataset object and splits into two
 -   An object of numeric data
 -   An object of categorical data
 
-The user selects from a list of both numeric and categorical variables to summarize and if the variable requested by the user is not present in the supplied source dataset, the procedure stops and alerst the user:
+The user selects from a list of both numeric and categorical variables to summarize and if the variable requested by the user is not present in the supplied source dataset, the procedure stops and alerts the user:
 
 `"You cannot subset data that was not pulled from API, re-pull desired variables"`
 
@@ -411,6 +412,7 @@ for(i in 1:length(charData)){
     names(catSummary)[i]<-paste("count", names(charData[i]), sep="_")
 }
 
+#assemble tibble of data for numeric variables
 numSumRowNames <- as_tibble(c("splMean", "splSD"))
 numericSum <- tibble()
 numericSum <- as_tibble(bind_rows(splMeanTbl,splSDTbl))
@@ -430,15 +432,54 @@ return(c(catSummary,meanSD))
 
 ## Test out `censusSummerizR` Function
 
-Now that the `censusSummerizR` function has been written, we need to make sure that it works as intended. The variables below are representative numeric and categorical variables and return summaries, exclusive of the "weight" variable, `PWGTP`.
+Now that the `censusSummerizR` function has been written, we need to make sure that it works as intended. The variables below are representative numeric and categorical variables and return summaries, exclusive of the "weight" variable, `PWGTP`. A list of tibbles that describe the sample mean, sample SD and counts is returned.
 
 ```{r}
 summaryList<-censusSummerizR(censusData, numericVars = c("AGEP", "GASP"), catVars = c( "SEX"))
 summaryList
 
-length(summaryList)
-#Present example data in rendered webpage
+#Present example data in rendered webpage in nicely formatted tables
 knitr::kable(summaryList[1])
 knitr::kable(summaryList[2])
 knitr::kable(summaryList[3])
+```
+
+## Generate function to plot output retrieved from PUMS Census API
+
+The function `censusPlotR` will generate box plots for character variables that are returned as categorical from `retrieveCensus`.  This can help the user visualize differences and similarities between categories.
+
+```{r}
+censusPlotR <- function(x, catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"), numericVars=c("AGEP","GASP","GRPIP","JWMNP")){
+
+#force user to specify a single numeric and single categorical variable
+if(length(numericVars)>1){
+  stop("You cannot plot more than 1 numeric variable")
+}
+
+if(length(catVars)>1){
+  stop("You cannot plot more than 1 categorical variable")
+}
+
+#plot function weightss numeric variable by PWGTP.  Recommended "weight=" as an aesthetic did not seem to work and may be a known issue. 
+ggplot(x, aes(x = get(catVars), y = get(numericVars)*PWGTP)) +
+         geom_boxplot() +
+         ggtitle("Boxplot of User Selected Categorical Variables Weighted by PWGTP") +
+  xlab(catVars) + ylab(numericVars)
+
+}
+```
+
+## Test Plot Function
+
+Here we test the `censusPlotR` function by plotting `AGEP` by `SEX`.
+
+*Notes to User: enter dataset to evaluate in function and enter a single categorical variable and a single numeric variable.  The funtion will stop and return the errors: `"You cannot plot more than 1 numeric variable"` and/or `"You cannot plot more than 1 categorical variable"` if more than 1 of either variable type is requested.
+
+
+
+```{r}
+summaryPlot <- censusPlotR(censusData, catVars= "SEX", numericVars = "AGEP")
+
+summaryPlot
+
 ```
