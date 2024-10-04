@@ -125,7 +125,7 @@ lkpToMiddleTime <- function(tibble,year=2022,timeVar){
     mutate(TIME_INTERVAL = ifelse(TIME_INTERVAL == "N/A (not a worker; worker who worked from home)", NA, TIME_INTERVAL))
   names(returnData) <- c(names(returnData)[1:(length(names(returnData))-1)],timeVar)
   returnData <- returnData %>%
-    separate_wider_delim(timeVar,delim = " to ",names=c('StartTime','EndTime')) %>%
+    separate_wider_delim(timeVar,delim = " to ",names=c('StartTime','EndTime'),too_few=c('align_start')) %>%
     mutate(StartTime = parse_time(gsub("\\.", "", StartTime),format = "%I:%M %p"),
            EndTime = parse_time(gsub("\\.", "", EndTime),format = "%I:%M %p"),
            MidTime = ifelse(!is.na(StartTime), midTimeFunc(StartTime,EndTime),NA)
@@ -139,7 +139,8 @@ lkpToMiddleTime <- function(tibble,year=2022,timeVar){
 factorLkp <- function(tibbleData,year,catVar){
   apiData <- varsLkpTibble(year=year,varName = catVar)
   x <- tibbleData[[catVar]]
-  levels <- sort(unique(x))
+  levels <- sort(as.numeric(unique(x)))
+  apiData[[catVar]] <- as.numeric(apiData[[catVar]])
   apiData <- apiData %>%
     filter(get(catVar) %in% levels) %>%
     arrange(get(catVar))
@@ -293,9 +294,8 @@ AGEP,PWGTP are numeric. JWDP is time value. FER and SEX are categorical
 
 We see in the output the rules defined in the previous section have been followed.
 
-
 ```{r}
-state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
+state17 <- retrieveCensus(year=2021,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX","SCHL"),geographyLevel = "State",geographySpec = 17)
 
 state17
 ```
@@ -479,7 +479,15 @@ knitr::kable(summaryList[3])
 
 We've built and tested these functions, but lets use them all together.
 
+I want to explore data from a state (key = 17). I want AGEP, GASP, JWMNP, SEX, HHL, SCH and SCHL variables returned. I want the data for this state from 2020-2022.
+
+A list of variables and there definitions can be found here <https://api.census.gov/data/2022/acs/acs1/pums/variables.html>
+
+Lets call our `retrieveMultiYearCensus` function and pass the appropriate parameters
+
 ```{r}
-## Code block to hold some calls and code
+censusStateData <- retrieveMultiYearCensus(years=c(2021,2022),numericVars = c("AGEP","GASP","JWMNP"),catVars=c("HHL","SCH","SCHL","SEX"),geographyLevel = "State",geographySpec = 17)
+
+censusStateData
 ```
 
