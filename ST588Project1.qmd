@@ -177,9 +177,20 @@ To construct the API URL, we need the constant components (base), the year, a li
 For the geography specification, we use switch() and if else functions to follow these generic rules:
 
 -   If the user passes "All" in geographyLevel, return an empty string
--   If the user passes another value in geography level return in the following format "geographyLevel:geographySpec". An example is "state:17" \_ If the user passes another value in geography level and does NOT include a geography spec, return everything for that level in the format (example) of "state:\*", with an asterik representing all.
+-   If the user passes another value in geography level return in the following format "geographyLevel:geographySpec". An example is "state:17"
+-   If the user passes another value in geography level and does NOT include a geography spec, return everything for that level in the format (example) of "state:\*", with an asterik representing all.
 
-Paste all of these string values together to construct the API.
+Paste all of these string values together to construct the API and use httr:get() and our helpfer function the return a tibble called "data"
+
+### Post API Transformations
+
+All of the values in the tibble are "character" data type and our category variable values are keys.
+
+To make this more usable we are....
+
+1.  Converting our numeric variables to "numeric" type
+2.  Looking up time values for our time variables and returning the median time in the provided interval in HMS format
+3.  Lookup up categorical values and apply our factor function.
 
 ```{r}
 retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL){
@@ -250,13 +261,15 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
     varString <- paste0(varString,value,if(value != allVarsReq[length(allVarsReq)]){","})
   }
   
+  ## Build API, fetch data, convert to tibble
+  
   apiURL <- paste0('https://api.census.gov/data/',year,'/acs/acs1/pums?get=',varString,regioninString)
   
   rawData <- httr::GET(apiURL)
   
   data <- rawToTibble(rawData)
   
-  ## Change data types to be appropriate
+  ## Change data types
   
   for (value in intersect(numericVars,timeOptions)){
     data <- lkpToMiddleTime(data,year=year,timeVar = value)
@@ -272,13 +285,28 @@ retrieveCensus <- function(year=2022,numericVars=c("AGEP","PWGTP"),catVars=c("SE
 }
 ```
 
+## Using our API Function
+
+Lets show an example of how our API call works (and that it works). For a state (code 17), we want to retrieve AGEP,PWGTP,JWDP,FER and SEX variables from the 2022 PUMS data set.
+
+AGEP,PWGTP are numeric. JWDP is time value. FER and SEX are categorical
+
+We see in the output the rules defined in the previous section have been followed.
+
+
 ```{r}
 state17 <- retrieveCensus(year=2022,numericVars=c("AGEP","PWGTP","JWDP"),catVars=c("FER","SEX"),geographyLevel = "State",geographySpec = 17)
 
 state17
 ```
 
-## Function to pass multiple years and retrieve data
+## What if I want multiple years of data?
+
+For multiple years of data, we have to make a separate API call and data processes for EACH year and union these datasets together in one tibble.
+
+Our function takes in the same parameters as our previous function for single year. This is because we are iterating through each value in our year vector, grabbing the same variables form that years API and then appending.
+
+To know what year the data came from, we append the "year" to the unioned tibble.
 
 ```{r}
 retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),catVars=c("SEX"),geographyLevel =c("All"),geographySpec = NULL) {
@@ -293,12 +321,16 @@ retrieveMultiYearCensus <- function(years=c(2022),numericVars=c("AGEP","PWGTP"),
 }
 ```
 
-## Testing multi-year function
+## Using our multi-year function
+
+Again, this is the same function so the arguments for `retrieveMultiYearCensus` are almost identical to `retrieveCensus`. The only difference is `retrieveMultiYearCensus` accepts a multi-value vector of years.
+
+Lets test this on years 2021 and 2022 with a state (code 17). We will return our default parameters.
 
 ```{r}
-#state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
+state17MultiYear <- retrieveMultiYearCensus(years=c(2021,2022),geographyLevel = "State",geographySpec = 17)
 
-#state17MultiYear
+state17MultiYear
 ```
 
 ## Test `retrieveCensus` function
