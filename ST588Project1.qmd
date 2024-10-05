@@ -493,7 +493,7 @@ if(length(catVars)>1){
   stop("You cannot plot more than 1 categorical variable")
 }
 
-ggplot(x, aes(x = get(catVars), y = get(numericVars), weight=PWGTP)) +
+ggplot(x, aes(x = get(catVars), y = get(numericVars)), weight=PWGTP) +
          geom_boxplot() +
          ggtitle("Boxplot of User Selected Categorical Variables Weighted by PWGTP") +
   xlab(catVars) + ylab(numericVars)
@@ -573,3 +573,4 @@ We've illustrated in this project how we can use R to retrieve, transform and an
 2.  Transformed API data
 3.  Summarized data
 4.  Plotted data
+
