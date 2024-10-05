@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>quarto-input8df4ed2080ec41c</title>
+<title>quarto-input8bfe680957d45cbf</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -171,7 +171,7 @@ Tyler Hunt</div></h1>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>censusApiTest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Response [https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&amp;SCHL=24]
-  Date: 2024-10-05 12:58
+  Date: 2024-10-05 14:15
   Status: 200
   Content-Type: application/json;charset=utf-8
   Size: 938 kB
@@ -774,7 +774,7 @@ $`Mean and SD`
 <span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot plot more than 1 categorical variable"</span>)</span>
 <span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">get</span>(catVars), <span class="at">y =</span> <span class="fu">get</span>(numericVars), <span class="at">weight=</span>PWGTP)) <span class="sc">+</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">get</span>(catVars), <span class="at">y =</span> <span class="fu">get</span>(numericVars)), <span class="at">weight=</span>PWGTP) <span class="sc">+</span></span>
 <span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>         <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
 <span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>         <span class="fu">ggtitle</span>(<span class="st">"Boxplot of User Selected Categorical Variables Weighted by PWGTP"</span>) <span class="sc">+</span></span>
 <span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(catVars) <span class="sc">+</span> <span class="fu">ylab</span>(numericVars)</span>
@@ -1126,6 +1126,20 @@ $`Mean and SD`
 <li>Summarized data</li>
 <li>Plotted data</li>
 </ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(censusData)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 8
+   AGEP  GASP PWGTP SEX    HHL             state JWAP   JWDP  
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt;  &lt;fct&gt;           &lt;chr&gt; &lt;time&gt; &lt;time&gt;
+1    82     3    32 Female N/A (GQ/vacant) 17       NA     NA 
+2    43     3    91 Male   N/A (GQ/vacant) 17       NA     NA 
+3    18     3    45 Female N/A (GQ/vacant) 17       NA     NA 
+4    49     3    38 Male   N/A (GQ/vacant) 17       NA     NA 
+5    42     3     8 Male   N/A (GQ/vacant) 17       NA     NA 
+6    83     3     7 Male   N/A (GQ/vacant) 17       NA     NA </code></pre>
+</div>
+</div>
 
 
 </section>
