@@ -347,14 +347,15 @@ censusData<-retrieveCensus(year=2022, numericVars=c("AGEP", "GASP", "PWGTP", "JW
 
 ### Check `retrieveCensus` function output object structure.
 
-The code chunk below can be used to visualize the structure of the data extracted by the `retrieveCensus` function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. `names` shows the column names, `length()` give us a number of items in the object, `str()` tells us the stucture of the object, and calling `censusData` shows us the first 1000 rows of the object. This code has been commented out as the output takes up a lot of space!
+The code chunk below can be used to visualize the structure of the data extracted by the `retrieveCensus` function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. `names` shows the column names, `length()` give us a number of items in the object, `str()` tells us the stucture of the object, and calling `censusData` shows us the first 1000 rows of the object. This code will run, but we will not display the output to conserve space!
 
 ```{r}
-#names(censusData)
-#length(names(censusData))
-#str(censusData)
-#head(censusData)
-#censusData
+#| include: false
+names(censusData)
+length(names(censusData))
+str(censusData)
+head(censusData)
+censusData
 ```
 
 # Create custom summary function
@@ -478,7 +479,7 @@ knitr::kable(summaryList[3])
 
 ## Generate function to plot output retrieved from PUMS Census API
 
-The function `censusPlotR` will generate box plots for character variables that are returned as categorical from `retrieveCensus`.  This can help the user visualize differences and similarities between categories.
+The function `censusPlotR` will generate box plots for character variables that are returned as categorical from `retrieveCensus`. This can help the user visualize differences and similarities between categories.
 
 ```{r}
 censusPlotR <- function(x, catVars=c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"), numericVars=c("AGEP","GASP","GRPIP","JWMNP")){
@@ -492,8 +493,7 @@ if(length(catVars)>1){
   stop("You cannot plot more than 1 categorical variable")
 }
 
-#plot function weightss numeric variable by PWGTP.  Recommended "weight=" as an aesthetic did not seem to work and may be a known issue. 
-ggplot(x, aes(x = get(catVars), y = get(numericVars)*PWGTP)) +
+ggplot(x, aes(x = get(catVars), y = get(numericVars), weight=PWGTP)) +
          geom_boxplot() +
          ggtitle("Boxplot of User Selected Categorical Variables Weighted by PWGTP") +
   xlab(catVars) + ylab(numericVars)
@@ -505,9 +505,7 @@ ggplot(x, aes(x = get(catVars), y = get(numericVars)*PWGTP)) +
 
 Here we test the `censusPlotR` function by plotting `AGEP` by `SEX`.
 
-*Notes to User: enter dataset to evaluate in function and enter a single categorical variable and a single numeric variable.  The funtion will stop and return the errors: `"You cannot plot more than 1 numeric variable"` and/or `"You cannot plot more than 1 categorical variable"` if more than 1 of either variable type is requested.
-
-
+\*Notes to User: enter dataset to evaluate in function and enter a single categorical variable and a single numeric variable. The funtion will stop and return the errors: `"You cannot plot more than 1 numeric variable"` and/or `"You cannot plot more than 1 categorical variable"` if more than 1 of either variable type is requested.
 
 ```{r}
 summaryPlot <- censusPlotR(censusData, catVars= "SEX", numericVars = "AGEP")
@@ -534,10 +532,9 @@ censusStateData
 
 I'm interested in viewing some summary statistics for Age (AGEP), Sex (SEX), School Level (SCHL) and Travel Time to work (JWMNP). Lets use our `censusSummerizR` and view the output.
 
-For our numeric variables, our mean age is 39.5 with a standard deviation of 23. This means our one standard deviation range is ~ 26 to 62. With just this piece of information, it seems to be a good spread of data!
+For our numeric variables, our mean age is 39.5 with a standard deviation of 23. This means our one standard deviation range is \~ 26 to 62. With just this piece of information, it seems to be a good spread of data!
 
 The distribution of sex (male & female) seems almost uniform (50% each). Our SCHL factor also seems to be on par with what we would expect, which is a somewhat uniform distribution across grade levels. High School Diploma and Bachelors degrees are the highest attainment for those with a high school degree or some post-secondary education.
-
 
 ```{r}
 censusStateSummary <- censusSummerizR(x = censusStateData, numericVars = c("AGEP","JWMNP"), catVars = c("SEX","SCHL"))
@@ -549,4 +546,30 @@ knitr::kable(censusStateSummary[2])
 knitr::kable(censusStateSummary[3])
 ```
 
+Lets plot some categorical and numerical variables against each other in a box and whisker plot and see if we notice any trends.
 
+We will see if there's anything noteworthy when looking at two combinations:
+
+1.  AGEP & SCH
+2.  JWMNP & SCH
+
+For age (AGEP) and current schooling (SCH) we see plots that align with expectations. Many people who have not attended school in the past 3 years are relatively older (IQR roughly 30-62). Those for public school have a smaller center (\~13) and a smaller IQR (\~10-18). Similarly, those who have attended private school or college or home school have an IQR of \~10-23. All of these patterns meet expectations for current school enrollment based on age
+
+For travel time to work (JWMNP) and current schooling (SCH) we see a more crowded plot, but we can make sense of it! Most have a center near 0 with very small IQRs. Why is this? Well, we are measuring time to work, so to travel to work you are likely a) Not in school or b) 18 and older. 3 of our categories violate one of those conditions, meaning travel time to work will be near 0 because members of these categories are likely not working! The only group we would expect the majority to be working are those who have not attended school in the past 3 years. If you are not in school, it is likely you are employed and working. The upper level of the IQR for those that are working is \~25 minutes.
+
+```{r}
+ageSchoolPlot <- censusPlotR(x=censusStateData,catVars = "SCH",numericVars="AGEP")
+ageSchoolPlot
+
+travelSchoolPlot <- censusPlotR(x=censusStateData,catVars = "SCH",numericVars="JWMNP")
+travelSchoolPlot
+```
+
+## Conclusion
+
+We've illustrated in this project how we can use R to retrieve, transform and analyze data. To recap we built functions that
+
+1.  Built and retrieved data from an API URL using user parameters
+2.  Transformed API data
+3.  Summarized data
+4.  Plotted data
