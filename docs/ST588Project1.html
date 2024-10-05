@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>quarto-inputa238c45387c1f734</title>
+<title>quarto-input8df4ed2080ec41c</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -171,7 +171,7 @@ Tyler Hunt</div></h1>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>censusApiTest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Response [https://api.census.gov/data/2022/acs/acs1/pums?get=SEX,PWGTP,MAR&amp;SCHL=24]
-  Date: 2024-10-04 05:20
+  Date: 2024-10-05 12:58
   Status: 200
   Content-Type: application/json;charset=utf-8
   Size: 938 kB
@@ -515,14 +515,7 @@ Tyler Hunt</div></h1>
 </div>
 <section id="check-retrievecensus-function-output-object-structure." class="level3">
 <h3 class="anchored" data-anchor-id="check-retrievecensus-function-output-object-structure.">Check <code>retrieveCensus</code> function output object structure.</h3>
-<p>The code chunk below can be used to visualize the structure of the data extracted by the <code>retrieveCensus</code> function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. <code>names</code> shows the column names, <code>length()</code> give us a number of items in the object, <code>str()</code> tells us the stucture of the object, and calling <code>censusData</code> shows us the first 1000 rows of the object. This code has been commented out as the output takes up a lot of space!</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">#names(censusData)</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#length(names(censusData))</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#str(censusData)</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#head(censusData)</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#censusData</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
+<p>The code chunk below can be used to visualize the structure of the data extracted by the <code>retrieveCensus</code> function. These visualizations can be helpful to understand the types of data presented (in truncated form), some representative values, and help the developer think of ways these data can be manipulated during creation of downstream functions. <code>names</code> shows the column names, <code>length()</code> give us a number of items in the object, <code>str()</code> tells us the stucture of the object, and calling <code>censusData</code> shows us the first 1000 rows of the object. This code will run, but we will not display the output to conserve space!</p>
 </section>
 </section>
 <section id="create-custom-summary-function" class="level1">
@@ -546,91 +539,91 @@ Tyler Hunt</div></h1>
 </ul>
 <p><em>Notes to user: <code>censusSummerizR</code> function will calculate weighted sample mean and weighted sample standard deviations for the numeric variables of interest and will calculate counts of the categorical variables of interest. User should select variables to summarize that were pulled from the PUMS Census API using one of the <code>retrieveCensus</code> or <code>retrieveMultiYearCensus</code> functions. Variables not in your starting dataset will cause <code>censusSummerizR</code> to stop. <code>PWGTP</code> should not be summarized as it is an observation weight.</em></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>censusSummerizR <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">numericVars=</span><span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"GASP"</span>,<span class="st">"GRPIP"</span>,<span class="st">"JWMNP"</span>),   <span class="at">catVars=</span><span class="fu">c</span>(<span class="st">"FER"</span>,<span class="st">"HHL"</span>,<span class="st">"HISPEED"</span>,<span class="st">"JWTRNS"</span>,<span class="st">"SCH"</span>,<span class="st">"SCHL"</span>,<span class="st">"SEX"</span>)){</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice of variables to explore</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>numericDataDefault <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>charDataDefault <span class="ot">&lt;-</span> x<span class="sc">|&gt;</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">where</span>(is.factor))</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(numericDataDefault))<span class="sc">&lt;</span><span class="fu">length</span>(numericVars)){</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot subset data that was not pulled from API, re-pull desired variables"</span>)</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(charDataDefault))<span class="sc">&lt;</span><span class="fu">length</span>(catVars)){</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot subset data that was not pulled from API, re-pull desired variables"</span>)</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(numericDataDefault))<span class="sc">&gt;</span><span class="fu">length</span>(numericVars)){</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  numericData<span class="ot">&lt;-</span> x <span class="sc">|&gt;</span> </span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(numericVars)</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  numericData<span class="ot">&lt;-</span> numericDataDefault <span class="sc">|&gt;</span></span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(<span class="sc">-</span><span class="st">"PWGTP"</span>))</span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(charDataDefault<span class="sc">$</span>names))<span class="sc">&gt;</span><span class="fu">length</span>(catVars)){</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  charData<span class="ot">&lt;-</span> x <span class="sc">|&gt;</span> </span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(catVars)</span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>  charData<span class="ot">&lt;-</span> charDataDefault </span>
-<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>}    </span>
-<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="co">#create loop to mean each variable from numericData and place in list with name</span></span>
-<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>splMean <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(numericData)){</span>
-<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>  splMean[[i]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>((<span class="fu">sum</span>(numericData[[i]] <span class="sc">%*%</span> censusData<span class="sc">$</span>PWGTP)<span class="sc">/</span><span class="fu">sum</span>(censusData<span class="sc">$</span>PWGTP)))</span>
-<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(splMean)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="fu">names</span>(numericData[i]))</span>
-<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a><span class="co">#create loop to calculate sample SD from numericData and place in list with name</span></span>
-<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>splSD <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(numericData)){</span>
-<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>  splSD[[i]] <span class="ot">&lt;-</span> (<span class="fu">sqrt</span>(<span class="fu">sum</span>(numericData[[i]]<span class="sc">^</span><span class="dv">2</span> <span class="sc">%*%</span> censusData<span class="sc">$</span>PWGTP)<span class="sc">/</span><span class="fu">sum</span>(censusData<span class="sc">$</span>PWGTP)<span class="sc">-</span>splMean[[i]]<span class="sc">^</span><span class="dv">2</span>))</span>
-<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(splSD)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="fu">names</span>(numericData[i]))</span>
-<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a><span class="co">#coerce splMean and splSD to Tibbles</span></span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>splMeanTbl<span class="ot">&lt;-</span><span class="fu">as_tibble</span>(splMean)</span>
-<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>splSDTbl<span class="ot">&lt;-</span><span class="fu">as_tibble</span>(splSD)</span>
-<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a><span class="co">#Create loop to generate counts for each categorical variable</span></span>
-<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>catSummary <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(charData)){</span>
-<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>  catSummary[[i]]<span class="ot">&lt;-</span> charData[i] <span class="sc">|&gt;</span></span>
-<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(charData[i]) <span class="sc">|&gt;</span></span>
-<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>      <span class="fu">summarize</span>(<span class="at">n=</span><span class="fu">n</span>())</span>
-<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">names</span>(catSummary)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="st">"count"</span>, <span class="fu">names</span>(charData[i]), <span class="at">sep=</span><span class="st">"_"</span>)</span>
-<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a><span class="co">#assemble tibble of data for numeric variables</span></span>
-<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>numSumRowNames <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">c</span>(<span class="st">"splMean"</span>, <span class="st">"splSD"</span>))</span>
-<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>numericSum <span class="ot">&lt;-</span> <span class="fu">tibble</span>()</span>
-<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>numericSum <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">bind_rows</span>(splMeanTbl,splSDTbl))</span>
-<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>numericSumNamed <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">bind_cols</span>(numSumRowNames,numericSum))</span>
-<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a><span class="co">#Need to place "numericSumNamed" in its own named list so that output is visually appealing, and each object is of similar dimensions.</span></span>
-<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>meanSD <span class="ot">&lt;-</span><span class="fu">list</span>(numericSumNamed)</span>
-<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(meanSD) <span class="ot">&lt;-</span> <span class="st">"Mean and SD"</span></span>
-<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a><span class="co">#Return liSt of numeric and categorical summaries</span></span>
-<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(<span class="fu">c</span>(catSummary,meanSD))</span>
-<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>censusSummerizR <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">numericVars=</span><span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"GASP"</span>,<span class="st">"GRPIP"</span>,<span class="st">"JWMNP"</span>),   <span class="at">catVars=</span><span class="fu">c</span>(<span class="st">"FER"</span>,<span class="st">"HHL"</span>,<span class="st">"HISPEED"</span>,<span class="st">"JWTRNS"</span>,<span class="st">"SCH"</span>,<span class="st">"SCHL"</span>,<span class="st">"SEX"</span>)){</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#check user requested variables and create numeric and factor/character datasets to summarize seperately based on user choice of variables to explore</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>numericDataDefault <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>charDataDefault <span class="ot">&lt;-</span> x<span class="sc">|&gt;</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">where</span>(is.factor))</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(numericDataDefault))<span class="sc">&lt;</span><span class="fu">length</span>(numericVars)){</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot subset data that was not pulled from API, re-pull desired variables"</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(charDataDefault))<span class="sc">&lt;</span><span class="fu">length</span>(catVars)){</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot subset data that was not pulled from API, re-pull desired variables"</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(numericDataDefault))<span class="sc">&gt;</span><span class="fu">length</span>(numericVars)){</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  numericData<span class="ot">&lt;-</span> x <span class="sc">|&gt;</span> </span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(numericVars)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  numericData<span class="ot">&lt;-</span> numericDataDefault <span class="sc">|&gt;</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">where</span>(<span class="sc">-</span><span class="st">"PWGTP"</span>))</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(<span class="fu">names</span>(charDataDefault<span class="sc">$</span>names))<span class="sc">&gt;</span><span class="fu">length</span>(catVars)){</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  charData<span class="ot">&lt;-</span> x <span class="sc">|&gt;</span> </span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(catVars)</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  charData<span class="ot">&lt;-</span> charDataDefault </span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>}    </span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a><span class="co">#create loop to mean each variable from numericData and place in list with name</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>splMean <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(numericData)){</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  splMean[[i]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>((<span class="fu">sum</span>(numericData[[i]] <span class="sc">%*%</span> x<span class="sc">$</span>PWGTP)<span class="sc">/</span><span class="fu">sum</span>(x<span class="sc">$</span>PWGTP)))</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(splMean)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="fu">names</span>(numericData[i]))</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a><span class="co">#create loop to calculate sample SD from numericData and place in list with name</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>splSD <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(numericData)){</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  splSD[[i]] <span class="ot">&lt;-</span> (<span class="fu">sqrt</span>(<span class="fu">sum</span>(numericData[[i]]<span class="sc">^</span><span class="dv">2</span> <span class="sc">%*%</span> x<span class="sc">$</span>PWGTP)<span class="sc">/</span><span class="fu">sum</span>(x<span class="sc">$</span>PWGTP)<span class="sc">-</span>splMean[[i]]<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(splSD)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="fu">names</span>(numericData[i]))</span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="co">#coerce splMean and splSD to Tibbles</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>splMeanTbl<span class="ot">&lt;-</span><span class="fu">as_tibble</span>(splMean)</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>splSDTbl<span class="ot">&lt;-</span><span class="fu">as_tibble</span>(splSD)</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a><span class="co">#Create loop to generate counts for each categorical variable</span></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>catSummary <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(charData)){</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>  catSummary[[i]]<span class="ot">&lt;-</span> charData[i] <span class="sc">|&gt;</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(charData[i]) <span class="sc">|&gt;</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>      <span class="fu">summarize</span>(<span class="at">n=</span><span class="fu">n</span>())</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">names</span>(catSummary)[i]<span class="ot">&lt;-</span><span class="fu">paste</span>(<span class="st">"count"</span>, <span class="fu">names</span>(charData[i]), <span class="at">sep=</span><span class="st">"_"</span>)</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a><span class="co">#assemble tibble of data for numeric variables</span></span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>numSumRowNames <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">c</span>(<span class="st">"splMean"</span>, <span class="st">"splSD"</span>))</span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>numericSum <span class="ot">&lt;-</span> <span class="fu">tibble</span>()</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>numericSum <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">bind_rows</span>(splMeanTbl,splSDTbl))</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>numericSumNamed <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">bind_cols</span>(numSumRowNames,numericSum))</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a><span class="co">#Need to place "numericSumNamed" in its own named list so that output is visually appealing, and each object is of similar dimensions.</span></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>meanSD <span class="ot">&lt;-</span><span class="fu">list</span>(numericSumNamed)</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(meanSD) <span class="ot">&lt;-</span> <span class="st">"Mean and SD"</span></span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a><span class="co">#Return liSt of numeric and categorical summaries</span></span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(<span class="fu">c</span>(catSummary,meanSD))</span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="test-out-censussummerizr-function" class="level2">
 <h2 class="anchored" data-anchor-id="test-out-censussummerizr-function">Test out <code>censusSummerizR</code> Function</h2>
 <p>Now that the <code>censusSummerizR</code> function has been written, we need to make sure that it works as intended. The variables below are representative numeric and categorical variables and return summaries, exclusive of the “weight” variable, <code>PWGTP</code>. A list of tibbles that describe the sample mean, sample SD and counts is returned.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>summaryList<span class="ot">&lt;-</span><span class="fu">censusSummerizR</span>(censusData, <span class="at">numericVars =</span> <span class="fu">c</span>(<span class="st">"AGEP"</span>, <span class="st">"GASP"</span>), <span class="at">catVars =</span> <span class="fu">c</span>( <span class="st">"SEX"</span>))</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>summaryList</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>summaryList<span class="ot">&lt;-</span><span class="fu">censusSummerizR</span>(censusData, <span class="at">numericVars =</span> <span class="fu">c</span>(<span class="st">"AGEP"</span>, <span class="st">"GASP"</span>), <span class="at">catVars =</span> <span class="fu">c</span>( <span class="st">"SEX"</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>summaryList</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$count_SEX
 # A tibble: 2 × 2
@@ -657,8 +650,8 @@ $`Mean and SD`
 1 splMean  38.0  115.
 2 splSD    26.9  199.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Present example data in rendered webpage in nicely formatted tables</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Present example data in rendered webpage in nicely formatted tables</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="kable_wrapper">
 <tbody>
@@ -687,7 +680,7 @@ $`Mean and SD`
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="kable_wrapper">
 <tbody>
@@ -732,7 +725,7 @@ $`Mean and SD`
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">3</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summaryList[<span class="dv">3</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="kable_wrapper">
 <tbody>
@@ -770,24 +763,23 @@ $`Mean and SD`
 <h2 class="anchored" data-anchor-id="generate-function-to-plot-output-retrieved-from-pums-census-api">Generate function to plot output retrieved from PUMS Census API</h2>
 <p>The function <code>censusPlotR</code> will generate box plots for character variables that are returned as categorical from <code>retrieveCensus</code>. This can help the user visualize differences and similarities between categories.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>censusPlotR <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">catVars=</span><span class="fu">c</span>(<span class="st">"FER"</span>,<span class="st">"HHL"</span>,<span class="st">"HISPEED"</span>,<span class="st">"JWTRNS"</span>,<span class="st">"SCH"</span>,<span class="st">"SCHL"</span>,<span class="st">"SEX"</span>), <span class="at">numericVars=</span><span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"GASP"</span>,<span class="st">"GRPIP"</span>,<span class="st">"JWMNP"</span>)){</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#force user to specify a single numeric and single categorical variable</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(numericVars)<span class="sc">&gt;</span><span class="dv">1</span>){</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot plot more than 1 numeric variable"</span>)</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(catVars)<span class="sc">&gt;</span><span class="dv">1</span>){</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot plot more than 1 categorical variable"</span>)</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">#plot function weightss numeric variable by PWGTP.  Recommended "weight=" as an aesthetic did not seem to work and may be a known issue. </span></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">get</span>(catVars), <span class="at">y =</span> <span class="fu">get</span>(numericVars)<span class="sc">*</span>PWGTP)) <span class="sc">+</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>         <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>         <span class="fu">ggtitle</span>(<span class="st">"Boxplot of User Selected Categorical Variables Weighted by PWGTP"</span>) <span class="sc">+</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(catVars) <span class="sc">+</span> <span class="fu">ylab</span>(numericVars)</span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>censusPlotR <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">catVars=</span><span class="fu">c</span>(<span class="st">"FER"</span>,<span class="st">"HHL"</span>,<span class="st">"HISPEED"</span>,<span class="st">"JWTRNS"</span>,<span class="st">"SCH"</span>,<span class="st">"SCHL"</span>,<span class="st">"SEX"</span>), <span class="at">numericVars=</span><span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"GASP"</span>,<span class="st">"GRPIP"</span>,<span class="st">"JWMNP"</span>)){</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">#force user to specify a single numeric and single categorical variable</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(numericVars)<span class="sc">&gt;</span><span class="dv">1</span>){</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot plot more than 1 numeric variable"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(catVars)<span class="sc">&gt;</span><span class="dv">1</span>){</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"You cannot plot more than 1 categorical variable"</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">get</span>(catVars), <span class="at">y =</span> <span class="fu">get</span>(numericVars), <span class="at">weight=</span>PWGTP)) <span class="sc">+</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>         <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>         <span class="fu">ggtitle</span>(<span class="st">"Boxplot of User Selected Categorical Variables Weighted by PWGTP"</span>) <span class="sc">+</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(catVars) <span class="sc">+</span> <span class="fu">ylab</span>(numericVars)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="test-plot-function" class="level2">
@@ -795,9 +787,9 @@ $`Mean and SD`
 <p>Here we test the <code>censusPlotR</code> function by plotting <code>AGEP</code> by <code>SEX</code>.</p>
 <p>*Notes to User: enter dataset to evaluate in function and enter a single categorical variable and a single numeric variable. The funtion will stop and return the errors: <code>"You cannot plot more than 1 numeric variable"</code> and/or <code>"You cannot plot more than 1 categorical variable"</code> if more than 1 of either variable type is requested.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>summaryPlot <span class="ot">&lt;-</span> <span class="fu">censusPlotR</span>(censusData, <span class="at">catVars=</span> <span class="st">"SEX"</span>, <span class="at">numericVars =</span> <span class="st">"AGEP"</span>)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>summaryPlot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>summaryPlot <span class="ot">&lt;-</span> <span class="fu">censusPlotR</span>(censusData, <span class="at">catVars=</span> <span class="st">"SEX"</span>, <span class="at">numericVars =</span> <span class="st">"AGEP"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>summaryPlot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -813,8 +805,327 @@ $`Mean and SD`
 <p>I want to explore data from a state (key = 17). I want AGEP, GASP, JWMNP, SEX, HHL, SCH and SCHL variables returned. I want the data for this state from 2020-2022.</p>
 <p>A list of variables and there definitions can be found here <a href="https://api.census.gov/data/2022/acs/acs1/pums/variables.html" class="uri">https://api.census.gov/data/2022/acs/acs1/pums/variables.html</a></p>
 <p>Lets call our <code>retrieveMultiYearCensus</code> function and pass the appropriate parameters</p>
-<p>censusStateData &lt;- retrieveMultiYearCensus(years=c(2021,2022),numericVars = c(“AGEP”,“GASP”,“JWMNP”),catVars=c(“HHL”,“SCH”,“SCHL”,“SEX”),geographyLevel = “State”,geographySpec = 17)</p>
-<p>censusStateData</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>censusStateData <span class="ot">&lt;-</span> <span class="fu">retrieveMultiYearCensus</span>(<span class="at">years=</span><span class="fu">c</span>(<span class="dv">2021</span>,<span class="dv">2022</span>),<span class="at">numericVars =</span> <span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"GASP"</span>,<span class="st">"JWMNP"</span>),<span class="at">catVars=</span><span class="fu">c</span>(<span class="st">"HHL"</span>,<span class="st">"SCH"</span>,<span class="st">"SCHL"</span>,<span class="st">"SEX"</span>),<span class="at">geographyLevel =</span> <span class="st">"State"</span>,<span class="at">geographySpec =</span> <span class="dv">17</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>censusStateData</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 250,301 × 10
+    AGEP  GASP JWMNP PWGTP HHL             SCH           SCHL  SEX   state  year
+   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt;           &lt;fct&gt;         &lt;fct&gt; &lt;fct&gt; &lt;chr&gt; &lt;dbl&gt;
+ 1    37     3     0   104 N/A (GQ/vacant) No, has not … Grad… Male  17     2021
+ 2    48     3     0    29 N/A (GQ/vacant) No, has not … Regu… Fema… 17     2021
+ 3    66     3     0    19 N/A (GQ/vacant) No, has not … Mast… Fema… 17     2021
+ 4    51     3     0    84 N/A (GQ/vacant) No, has not … No s… Male  17     2021
+ 5    86     3     0     4 N/A (GQ/vacant) No, has not … 1 or… Male  17     2021
+ 6    32     3     0    86 N/A (GQ/vacant) No, has not … GED … Male  17     2021
+ 7    61     3     0    30 N/A (GQ/vacant) No, has not … Regu… Fema… 17     2021
+ 8    50     3     0    38 N/A (GQ/vacant) No, has not … Regu… Fema… 17     2021
+ 9    74     3     0     6 N/A (GQ/vacant) No, has not … Grad… Fema… 17     2021
+10    36     3     0     8 N/A (GQ/vacant) No, has not … Regu… Male  17     2021
+# ℹ 250,291 more rows</code></pre>
+</div>
+</div>
+<p>I’m interested in viewing some summary statistics for Age (AGEP), Sex (SEX), School Level (SCHL) and Travel Time to work (JWMNP). Lets use our <code>censusSummerizR</code> and view the output.</p>
+<p>For our numeric variables, our mean age is 39.5 with a standard deviation of 23. This means our one standard deviation range is ~ 26 to 62. With just this piece of information, it seems to be a good spread of data!</p>
+<p>The distribution of sex (male &amp; female) seems almost uniform (50% each). Our SCHL factor also seems to be on par with what we would expect, which is a somewhat uniform distribution across grade levels. High School Diploma and Bachelors degrees are the highest attainment for those with a high school degree or some post-secondary education.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>censusStateSummary <span class="ot">&lt;-</span> <span class="fu">censusSummerizR</span>(<span class="at">x =</span> censusStateData, <span class="at">numericVars =</span> <span class="fu">c</span>(<span class="st">"AGEP"</span>,<span class="st">"JWMNP"</span>), <span class="at">catVars =</span> <span class="fu">c</span>(<span class="st">"SEX"</span>,<span class="st">"SCHL"</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>censusStateSummary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$count_HHL
+# A tibble: 6 × 2
+  HHL                                     n
+  &lt;fct&gt;                               &lt;int&gt;
+1 N/A (GQ/vacant)                      9545
+2 English Only                       184045
+3 Spanish                             29314
+4 Other Indo-European languages       15763
+5 Asian and Pacific Island languages   8787
+6 Other Language                       2847
+
+$count_SCH
+# A tibble: 4 × 2
+  SCH                                                n
+  &lt;fct&gt;                                          &lt;int&gt;
+1 N/A (less than 3 years old)                     6579
+2 No, has not attended in the last 3 months     189441
+3 Yes, public school or public college           42759
+4 Yes, private school or college or home school  11522
+
+$count_SCHL
+# A tibble: 25 × 2
+   SCHL                            n
+   &lt;fct&gt;                       &lt;int&gt;
+ 1 N/A (less than 3 years old)  6579
+ 2 No schooling completed       7529
+ 3 Nursery school, preschool    3497
+ 4 Kindergarten                 2912
+ 5 Grade 1                      2523
+ 6 Grade 2                      2747
+ 7 Grade 3                      2965
+ 8 Grade 4                      2877
+ 9 Grade 5                      3045
+10 Grade 6                      3933
+# ℹ 15 more rows
+
+$count_SEX
+# A tibble: 2 × 2
+  SEX         n
+  &lt;fct&gt;   &lt;int&gt;
+1 Male   123047
+2 Female 127254
+
+$`Mean and SD`
+# A tibble: 2 × 3
+  value    AGEP JWMNP
+  &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+1 splMean  39.6  11.0
+2 splSD    23.1  19.2</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(censusStateSummary[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="kable_wrapper">
+<tbody>
+<tr>
+<td>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">HHL</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">N/A (GQ/vacant)</td>
+<td style="text-align: right;">9545</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">English Only</td>
+<td style="text-align: right;">184045</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Spanish</td>
+<td style="text-align: right;">29314</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Other Indo-European languages</td>
+<td style="text-align: right;">15763</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Asian and Pacific Island languages</td>
+<td style="text-align: right;">8787</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Other Language</td>
+<td style="text-align: right;">2847</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(censusStateSummary[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="kable_wrapper">
+<tbody>
+<tr>
+<td>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">SCH</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">N/A (less than 3 years old)</td>
+<td style="text-align: right;">6579</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">No, has not attended in the last 3 months</td>
+<td style="text-align: right;">189441</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Yes, public school or public college</td>
+<td style="text-align: right;">42759</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yes, private school or college or home school</td>
+<td style="text-align: right;">11522</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(censusStateSummary[<span class="dv">3</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="kable_wrapper">
+<tbody>
+<tr>
+<td>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">SCHL</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">N/A (less than 3 years old)</td>
+<td style="text-align: right;">6579</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">No schooling completed</td>
+<td style="text-align: right;">7529</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Nursery school, preschool</td>
+<td style="text-align: right;">3497</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kindergarten</td>
+<td style="text-align: right;">2912</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 1</td>
+<td style="text-align: right;">2523</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grade 2</td>
+<td style="text-align: right;">2747</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 3</td>
+<td style="text-align: right;">2965</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grade 4</td>
+<td style="text-align: right;">2877</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 5</td>
+<td style="text-align: right;">3045</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grade 6</td>
+<td style="text-align: right;">3933</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 7</td>
+<td style="text-align: right;">3174</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grade 8</td>
+<td style="text-align: right;">4836</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 9</td>
+<td style="text-align: right;">4237</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grade 10</td>
+<td style="text-align: right;">5021</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grade 11</td>
+<td style="text-align: right;">5957</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">12th grade - no diploma</td>
+<td style="text-align: right;">4026</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Regular high school diploma</td>
+<td style="text-align: right;">47097</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GED or alternative credential</td>
+<td style="text-align: right;">7652</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Some college, but less than 1 year</td>
+<td style="text-align: right;">15558</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1 or more years of college credit, no degree</td>
+<td style="text-align: right;">26941</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Associate’s degree</td>
+<td style="text-align: right;">17353</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bachelor’s degree</td>
+<td style="text-align: right;">42229</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Master’s degree</td>
+<td style="text-align: right;">20252</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Professional degree beyond a bachelor’s degree</td>
+<td style="text-align: right;">4471</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Doctorate degree</td>
+<td style="text-align: right;">2890</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Lets plot some categorical and numerical variables against each other in a box and whisker plot and see if we notice any trends.</p>
+<p>We will see if there’s anything noteworthy when looking at two combinations:</p>
+<ol type="1">
+<li>AGEP &amp; SCH</li>
+<li>JWMNP &amp; SCH</li>
+</ol>
+<p>For age (AGEP) and current schooling (SCH) we see plots that align with expectations. Many people who have not attended school in the past 3 years are relatively older (IQR roughly 30-62). Those for public school have a smaller center (~13) and a smaller IQR (~10-18). Similarly, those who have attended private school or college or home school have an IQR of ~10-23. All of these patterns meet expectations for current school enrollment based on age</p>
+<p>For travel time to work (JWMNP) and current schooling (SCH) we see a more crowded plot, but we can make sense of it! Most have a center near 0 with very small IQRs. Why is this? Well, we are measuring time to work, so to travel to work you are likely a) Not in school or b) 18 and older. 3 of our categories violate one of those conditions, meaning travel time to work will be near 0 because members of these categories are likely not working! The only group we would expect the majority to be working are those who have not attended school in the past 3 years. If you are not in school, it is likely you are employed and working. The upper level of the IQR for those that are working is ~25 minutes.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ageSchoolPlot <span class="ot">&lt;-</span> <span class="fu">censusPlotR</span>(<span class="at">x=</span>censusStateData,<span class="at">catVars =</span> <span class="st">"SCH"</span>,<span class="at">numericVars=</span><span class="st">"AGEP"</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ageSchoolPlot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ST588Project1_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>travelSchoolPlot <span class="ot">&lt;-</span> <span class="fu">censusPlotR</span>(<span class="at">x=</span>censusStateData,<span class="at">catVars =</span> <span class="st">"SCH"</span>,<span class="at">numericVars=</span><span class="st">"JWMNP"</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>travelSchoolPlot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ST588Project1_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>We’ve illustrated in this project how we can use R to retrieve, transform and analyze data. To recap we built functions that</p>
+<ol type="1">
+<li>Built and retrieved data from an API URL using user parameters</li>
+<li>Transformed API data</li>
+<li>Summarized data</li>
+<li>Plotted data</li>
+</ol>
 
 
 </section>
