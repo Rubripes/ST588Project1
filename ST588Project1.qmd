@@ -534,31 +534,19 @@ censusStateData
 
 I'm interested in viewing some summary statistics for Age (AGEP), Sex (SEX), School Level (SCHL) and Travel Time to work (JWMNP). Lets use our `censusSummerizR` and view the output.
 
+For our numeric variables, our mean age is 39.5 with a standard deviation of 23. This means our one standard deviation range is ~ 26 to 62. With just this piece of information, it seems to be a good spread of data!
+
+The distribution of sex (male & female) seems almost uniform (50% each). Our SCHL factor also seems to be on par with what we would expect, which is a somewhat uniform distribution across grade levels. High School Diploma and Bachelors degrees are the highest attainment for those with a high school degree or some post-secondary education.
+
+
 ```{r}
-censusStateSummary <- censusSummerizR(x = censusStateData, numericVars = c("AGEP"), catVars = c("SEX","SCHL"))
+censusStateSummary <- censusSummerizR(x = censusStateData, numericVars = c("AGEP","JWMNP"), catVars = c("SEX","SCHL"))
+
+censusStateSummary
 
 knitr::kable(censusStateSummary[1])
 knitr::kable(censusStateSummary[2])
 knitr::kable(censusStateSummary[3])
 ```
 
-```{r}
-if (!is.vector(censusStateData[["AGEP"]]) || !is.vector(censusStateData$PWGTP)) {
-  stop("Both arguments must be vectors.")
-}
-
-# Ensure both vectors are row vectors or column vectors
-if (length(dim(censusStateData[["AGEP"]])) == 2 && length(dim(censusStateData$PWGTP)) == 2) {
-  # If both are matrices, check if they have the same dimensions
-  if (dim(censusStateData[["AGEP"]]) != dim(censusStateData$PWGTP)) {
-    stop("Matrix dimensions are not compatible.")
-  }
-} else {
-  # If one or both are vectors, ensure they have the same length
-  if (length(censusStateData[["AGEP"]]) != length(censusStateData$PWGTP)) {
-    stop("Vector lengths are not compatible.")
-  }
-}
-
-```
 
